@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="mocklocation_google_map_api_key">AIzaSyBzvfLAdiTGyVnix9y4kckenf1j6ffAWOQ</string>
+    <string name="mocklocation_google_map_api_key">AIzaSyA1m2O4NZ_Ak9bqGvyLaEbeELGKPgVQnHo</string>
     <string name="mocklocation_mapactivity_bottom_banner_id">ca-app-pub-8328291812241823/7702959394</string>
     <string name="mocklocation_interstitial_id">ca-app-pub-8328291812241823/6086625390</string>
     <string name="admod_testdevice_id_m8">9A49ECF334FB22BC8C4E63B84B8F48A5</string>

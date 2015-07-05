@@ -1,8 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<searchable xmlns:android="http://schemas.android.com/apk/res/android" 
-    android:label="@string/title_activity_my_geofence"
-    android:hint="@string/search_hint"
-    android:searchSuggestAuthority="@string/search_authority"
-    android:searchSuggestIntentAction = "android.intent.action.SEARCH">
-</searchable>
-<!-- From: file:/Users/Shin/StudioProjects/MockLocation/app/src/main/res/xml/searchable.xml -->

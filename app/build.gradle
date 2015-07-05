@@ -22,7 +22,6 @@ android {
             signingConfig signingConfigs.platform
         }
         debug {
-            signingConfig signingConfigs.platform
             debuggable true
         }
     }
