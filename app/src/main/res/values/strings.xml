@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="app_name">MockLocation</string>
+    <string name="menu_settings">Settings</string>
+    <string name="hello_world">Hello world!</string>
+    <string name="title_activity_my_geofence">Mock Location</string>
+    <string name="search_hint">Search location</string>
+    <string name="action_search">Search location</string>
+    
+    <string name="notification_mocklocation_secondline"
+    		translation_description="The second line of mock location notification
+    		
+    		%1$f Latitude
+    		%2%f Lontitude">
+    		( %1$.4f &#44; %2$.4f )
+  	</string>
+  	
+    <string name = "dialog_enable_mocklocation"
+        	translation_description="the message show when mock location is not enabled on device ">
+        	Please enable mock location settings on your device 
+    </string>
+    
+    <string name="notification_mocklocation_title"
+    		translation_description="the title of mock location notification ">
+    		XXX Location
+    </string>
+    
+	<string name="generic_no"
+ 			translation_description="The text on a button to say no.">
+  			No
+	</string>
+	
+ 	<string name="generic_ok"
+     		translation_description="The text on a button to say ok.">
+      		OK
+   	</string>
+   	
+   	<string name="generic_yes"
+     		translation_description="The text on a button to say ok.">
+      		Yes
+   	</string>
+   	
+   	<string name="generic_cancel"
+    		translation_description="The text on a button to say cancel.">
+   			Cancel
+  	</string>
+  	
+  	 <string name="generic_settings"
+    		translation_description="The text on a button to say settings.">
+   			Settings
+  	</string>
+  	
+    <string name="generic_progress_title"
+     		translation_description="The title on a progress dialog asking the user to wait.">
+      		Please wait&#8230;
+    </string>
+    
+    <string name="menu_map"
+			translation_description="In the menu, under the map layer option, the submenu to display normal map.
+      		Character limit: ~20 (1 line)">
+     		Map
+  	</string>
+  	
+  	<string name="menu_map_layer"
+    		translation_description="In the menu, to change the map layer.
+
+      		Character limit: ~20 (1 line)">
+    		Map layer
+  	</string>
+  	
+ 	<string name="menu_satellite"
+			translation_description="In the menu, under the map layer option, the submenu to display satellite.
+      		Character limit: ~20 (1 line)">
+     		Satellite
+  	</string>
+  	 
+ 	<string name="menu_satellite_with_streets"
+			translation_description="In the menu, under the map layer option, the submenu to display Satellite with streets.
+      		Character limit: ~20 (1 line)">
+     		Satellite with streets
+  	</string>
+  	 
+ 	<string name="menu_terrain"
+			translation_description="In the menu, under the map layer option, the submenu to display terrain.
+      		Character limit: ~20 (1 line)">
+     		Terrain
+  	</string>
+  	
+ 	<string name="pref_storage_title"
+			translation_description="In the settings. the storage settings block title
+      		Character limit: ~20 (1 line)">
+     		Storage
+  	</string>
+  	
+  	<string name="pref_storage_clear_history_title"
+			translation_description="In the settings. in the storage settings block , the clear history title 
+      		Character limit: ~20 (1 line)">
+     		Clear Search History
+  	</string>
+  	
+  	<string name="pref_storage_clear_history_summary"
+			translation_description="In the settings. in the storage settings block , the clear history summary
+      		Character limit: ~20 (1 line)">
+     		Clear all the search history on device 
+  	</string>
+ 	
+  	<string name="pref_location_title"
+			translation_description="In the settings. in the location settings block title.
+      		Character limit: ~20 (1 line)">
+     		Location 
+  	</string>
+    
+  	<string name="pref_location_report_interval_title"
+			translation_description="In the settings. in the location settings block . location report interval title
+      		Character limit: ~20 (1 line)">
+     		Location report interval 
+  	</string>
+  	
+  	<string name="pref_location_report_interval_summary"
+			translation_description="In the settings. in the location settings block . location report interval summary      		Character limit: ~20 (1 line)">
+     		%1$d seconds  
+  	</string>
+  	
+  	<string name="pref_location_report_interval_dialogTitle"
+			translation_description="In the settings. in the location settings block . location report interval dialogTitle      		Character limit: ~20 (1 line)">
+     		Location report interval
+  	</string>
+  	
+  	
+</resources>

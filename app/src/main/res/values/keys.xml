@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="mock_btn_enabled_key">mock_btn_enalbed_key</string>
+    <string name="map_lastknow_marker_lat_key">map_last_marker_lat</string>
+    <string name="map_lastknow_marker_lon_key">map_last_marker_lon</string>
+    <string name="map_lastknow_cam_lat_key">map_last_cam_lat</string>
+    <string name="map_lastknow_cam_lon_key">map_last_cam_lon</string>
+    <string name="map_type_key">mapType</string>
+    <string name="mocklocationservice_state_key">mock_location_service_state</string>
+    <string name="pref_storage_key">pref_storage</string>
+    <string name="pref_storage_clear_history_key">pref_storage_clear_history</string>
+    <string name="pref_location_key">pref_location</string>
+    <string name="pref_location_report_interval_key">pref_location_reporting</string>
+</resources>

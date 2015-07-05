@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android" >
+    
+    <PreferenceCategory 
+        android:title="@string/pref_storage_title"
+        android:key="@string/pref_storage_key">
+	     <Preference
+	          android:key="@string/pref_storage_clear_history_key"
+	          android:title="@string/pref_storage_clear_history_title"
+	          android:summary="@string/pref_storage_clear_history_summary" />
+    </PreferenceCategory>
+    
+    <PreferenceCategory 
+        android:title="@string/pref_location_title"
+        android:key="@string/pref_location_key">
+	    <org.ShinRH.android.mocklocation.settings.MyEditTextPreference
+	        android:imeOptions="actionDone"
+	        android:inputType="number"
+	        android:key="@string/pref_location_report_interval_key"
+	        android:title="@string/pref_location_report_interval_title"
+	        android:dialogTitle="@string/pref_location_report_interval_dialogTitle" />
+	</PreferenceCategory>
+
+</PreferenceScreen>
+<!-- From: file:/Users/Shin/StudioProjects/MockLocation/app/src/main/res/xml/preference.xml -->

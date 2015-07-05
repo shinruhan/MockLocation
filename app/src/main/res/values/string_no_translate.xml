@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+        
+	<!-- string name for searchable xml  -->
+    <string name="search_authority">org.ShinRH.android.mocklocation.googlePlace.SearchPlaceContentProvider</string>
+  	
+    <string name="value_unknown">-</string>
+  
+</resources>

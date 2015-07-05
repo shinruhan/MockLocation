@@ -1,0 +1,37 @@
+apply plugin: 'com.android.application'
+
+android {
+    signingConfigs {
+        platform {
+            storeFile file('/Users/Shin/Dropbox/WorkSpace/Android/KeyStore/platform.jks')
+        }
+    }
+    compileSdkVersion 22
+    buildToolsVersion "22.0.1"
+    defaultConfig {
+        applicationId "org.ShinRH.android.mocklocation"
+        minSdkVersion 11
+        targetSdkVersion 22
+        signingConfig signingConfigs.platform
+    }
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.txt'
+            debuggable true
+            signingConfig signingConfigs.platform
+        }
+        debug {
+            signingConfig signingConfigs.platform
+            debuggable true
+        }
+    }
+    productFlavors {
+    }
+}
+
+dependencies {
+    compile 'com.android.support:appcompat-v7:22.2.0'
+    compile 'com.google.android.gms:play-services:7.5.0'
+    compile 'com.android.support:support-v4:22.2.0'
+}

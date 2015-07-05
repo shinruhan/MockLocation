@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<level-list xmlns:android="http://schemas.android.com/apk/res/android" >
+    
+    <!-- on  state -->
+    <item 
+        android:drawable="@drawable/btn_mocklocation_on"
+        android:minLevel="@integer/btn_mocklocation_on"
+        android:maxLevel="@integer/btn_mocklocation_on"
+    />
+		<!-- off state  -->
+	<item
+        android:drawable="@drawable/btn_mocklocation_off"
+        android:minLevel="@integer/btn_mocklocation_off"
+        android:maxLevel="@integer/btn_mocklocation_off"
+    />
+</level-list>

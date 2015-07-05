@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!-- Generated with http://android-holo-colors.com -->
+<resources xmlns:android="http://schemas.android.com/apk/res/android">
+
+  <style name="MapAppTheme" parent="@style/_MapAppTheme"/>
+
+  <style name="_MapAppTheme" parent="Theme.AppCompat.Light">
+
+    <item name="android:editTextStyle">@style/EditTextMapAppTheme</item>
+
+    <item name="android:textColorHighlight">#99025ea7</item>
+
+    <item name="android:autoCompleteTextViewStyle">@style/AutoCompleteTextViewMapAppTheme</item>
+
+    <item name="android:checkboxStyle">@style/CheckBoxMapAppTheme</item>
+
+    <item name="android:radioButtonStyle">@style/RadioButtonMapAppTheme</item>
+
+    <item name="android:buttonStyle">@style/ButtonMapAppTheme</item>
+
+    <item name="android:imageButtonStyle">@style/ImageButtonMapAppTheme</item>
+
+    <item name="android:spinnerStyle">@style/SpinnerMapAppTheme</item>
+
+    <item name="android:spinnerDropDownItemStyle">@style/SpinnerDropDownItemMapAppTheme</item>
+
+    <item name="android:progressBarStyleHorizontal">@style/ProgressBarMapAppTheme</item>
+
+    <item name="android:seekBarStyle">@style/SeekBarMapAppTheme</item>
+
+    <item name="android:ratingBarStyle">@style/RatingBarMapAppTheme</item>
+
+    <item name="android:ratingBarStyleIndicator">@style/RatingBarBigMapAppTheme</item>
+
+    <item name="android:ratingBarStyleSmall">@style/RatingBarSmallMapAppTheme</item>
+
+    <item name="android:buttonStyleToggle">@style/ToggleMapAppTheme</item>
+
+    <item name="android:listViewStyle">@style/ListViewMapAppTheme</item>
+
+    <item name="android:listViewWhiteStyle">@style/ListViewMapAppTheme.White</item>
+
+    <item name="android:spinnerItemStyle">@style/SpinnerItemMapAppTheme</item>
+
+  </style>
+
+</resources>
