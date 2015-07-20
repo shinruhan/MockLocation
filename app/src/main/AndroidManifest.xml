@@ -63,11 +63,11 @@
         </service>
         
 <!-- search place providers -->
-        <provider android:authorities="org.ShinRH.android.mocklocation.googlePlace.SearchPlaceContentProvider"
+        <provider android:authorities="org.ShinRH.android.mocklocation.place.SearchPlaceContentProvider"
           android:enabled="true"
           android:exported="false"
           android:multiprocess="false"
-          android:name=".googlePlace.SearchPlaceContentProvider"
+          android:name=".place.SearchPlaceContentProvider"
            >         
         </provider>
         

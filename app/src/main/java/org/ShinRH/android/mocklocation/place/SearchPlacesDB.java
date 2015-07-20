@@ -1,13 +1,8 @@
-package org.ShinRH.android.mocklocation.googlePlace;
+package org.ShinRH.android.mocklocation.place;
 
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.Iterator;
 
-import org.ShinRH.android.mocklocation.googlePlace.Constants;
-
-import android.R.integer;
-import android.R.string;
 import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;

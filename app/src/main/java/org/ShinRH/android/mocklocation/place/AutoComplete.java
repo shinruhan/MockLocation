@@ -1,6 +1,10 @@
-package org.ShinRH.android.mocklocation.googlePlace;
+package org.ShinRH.android.mocklocation.place;
 
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.net.URLEncoder;
 import java.util.ArrayList;
 
@@ -24,23 +28,26 @@ public class AutoComplete {
 	private static final String OUT_JSON = "/json";
 	private String input;
 	private String key;
-	private String components;
-	private String URL ;  
+
 	
 	public AutoComplete(String Input , String key ) {
 		this.input = Input ; 
 		this.key = key;
-		makeUrl();
 	}
+
+
+    public ArrayList<SuggestPlace> query(){
+
+        String autoCompleteRespondJson = null;
+        autoCompleteRespondJson = getJsonRespond(makeUrl());
+        if (Constants.VERBODE)
+            Log.d(TAG, "getPlaceSuggestions getJsonRespond" + autoCompleteRespondJson);
+        return jsonRespondToSuggestPlace(autoCompleteRespondJson);
+
+    }
+
 	
-	public AutoComplete(String Input , String key , String local ) {
-		this.input = Input;
-		this.key = key;
-		this.components = local ;
-		makeUrl();
-	}
-	
-	private void makeUrl() {
+	private String makeUrl() {
 		
 		StringBuilder stringBuilder = new StringBuilder(PLACES_API_BASE + TYPE_AUTOCOMPLETE + OUT_JSON);
 		try {
@@ -49,11 +56,45 @@ public class AutoComplete {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		stringBuilder.append("&sensor=false&key=" + key);
-		URL = stringBuilder.toString();
+        stringBuilder.append("&sensor=false&key=" + key);
+		return  stringBuilder.toString();
 	}
-	
-	public ArrayList<SuggestPlace> jsonRespondToSuggestPlace(String jsonResults) {
+
+
+	private String getJsonRespond(String urlsting) {
+
+		HttpURLConnection conn = null;
+		StringBuilder jsonResults = new StringBuilder();
+		java.net.URL url;
+
+		try {
+			url = new URL(urlsting);
+			conn = (HttpURLConnection) url.openConnection();
+
+			InputStreamReader in = new InputStreamReader(conn.getInputStream());
+
+			// Load the results into a StringBuilder
+			int read;
+			char[] buff = new char[1024];
+			while ((read = in.read(buff)) != -1) {
+
+				jsonResults.append(buff, 0, read);
+			}
+
+		} catch (IOException e) {
+
+			e.printStackTrace();
+		} finally {
+			if (conn != null) {
+				conn.disconnect();
+			}
+		}
+
+		return jsonResults.toString();
+
+	}
+
+	private ArrayList<SuggestPlace> jsonRespondToSuggestPlace(String jsonResults) {
 		
 		ArrayList<SuggestPlace> resultList = null;
 		
@@ -80,8 +121,5 @@ public class AutoComplete {
 		return resultList;
 		
 	}
-	
-	public String getURL() {return URL;};
-	
 	
 }

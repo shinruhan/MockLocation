@@ -1,11 +1,10 @@
-package org.ShinRH.android.mocklocation.googlePlace;
+package org.ShinRH.android.mocklocation.place;
 
 
 import java.util.ArrayList;
 import java.util.List;
 
 
-import android.R.string;
 import android.content.BroadcastReceiver;
 import android.content.ContentProvider;
 import android.content.ContentValues;
@@ -18,20 +17,27 @@ import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.Uri;
 import android.os.Binder;
+import android.os.Bundle;
 import android.os.Process;
 import android.util.Log;
 
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.common.api.GoogleApiClient.ConnectionCallbacks;
+import com.google.android.gms.common.api.GoogleApiClient.OnConnectionFailedListener;
+import com.google.android.gms.location.LocationServices;
 
-
-public class SearchPlaceContentProvider extends ContentProvider {
+public class SearchPlaceContentProvider extends ContentProvider implements
+		ConnectionCallbacks, OnConnectionFailedListener {
 	
 	private static final String TAG =  SearchPlaceContentProvider.class.getName();
 	private final UriMatcher mUriMatcher;
 	private final GooglePlacesApi mGooglePlacesApi;
-	private  SearchPlacesDB mDB;
-	private  GeocoderAPI mGeocoderAPI;
-	private  Context mContext;
-	private  boolean mIsNetworkAvaialable;
+	private GoogleApiClient mGoogleApiClient;
+	private SearchPlacesDB mDB;
+	private GeocoderAPI mGeocoderAPI;
+	private Context mContext;
+	private boolean mIsNetworkAvaialable;
 	
 	public SearchPlaceContentProvider() {
 		
@@ -66,8 +72,17 @@ public class SearchPlaceContentProvider extends ContentProvider {
 		}
 		mDB      		 = new SearchPlacesDB(mContext);
 		mGeocoderAPI     = new GeocoderAPI(mContext);
-		
+
+		// Create a GoogleApiClient instance
+		mGoogleApiClient = new GoogleApiClient.Builder(mContext)
+				.addApi(LocationServices.API)
+				.addConnectionCallbacks(this)
+				.addOnConnectionFailedListener(this)
+				.build();
+        mGoogleApiClient.connect();
+
 		mIsNetworkAvaialable = isDeviceOnline();
+
 		IntentFilter filter = new IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION);        
 		mContext.registerReceiver(networkStateReceiver, filter);
 		
@@ -96,12 +111,12 @@ public class SearchPlaceContentProvider extends ContentProvider {
 			if(mIsNetworkAvaialable && mDB.ifNeedUpdate(query)){
 				Log.d(TAG,"query:" + query);
 				
-				ArrayList<SuggestPlace> suggestPlacesList = mGeocoderAPI.getPlaceSuggestions(query);
-				if (suggestPlacesList == null ) {
-					Log.d(TAG,"query from Geocoder fail try GooglePlaceAPI");
+				//ArrayList<SuggestPlace> suggestPlacesList = mGeocoderAPI.getPlaceSuggestions(query);
+				//if (suggestPlacesList == null ) {
+				//	Log.d(TAG,"query from Geocoder fail try GooglePlaceAPI");
 					// TO DO  need to use google place api or not ?? 
-					//suggestPlacesList = mGooglePlacesApi.getPlaceSuggestions(query);
-				}
+				ArrayList<SuggestPlace> suggestPlacesList = mGooglePlacesApi.getPlaceSuggestions(query);
+				//}
 				
 				mDB.insertGooglePlaces(suggestPlacesList);
 			}
@@ -109,9 +124,9 @@ public class SearchPlaceContentProvider extends ContentProvider {
 			ret =  mDB.getSuggestGooglePlaces(query); 
 			break;
 		case Constants.SearchSuggestion.SEARCHPLACETABLE_URI_CODE_RECENTPLACE_QUERY:
-			ret =  mDB.getRecentPlaces(); 
+			ret =  mDB.getRecentPlaces();
 			break;
-		default:
+			default:
 			Log.d(TAG, "no match for this uri");
 			break;
 		}
@@ -259,6 +274,20 @@ public class SearchPlaceContentProvider extends ContentProvider {
 		}
 		cursor.close();
     }
-    
 
+
+	@Override
+	public void onConnected(Bundle bundle) {
+
+	}
+
+	@Override
+	public void onConnectionSuspended(int i) {
+
+	}
+
+	@Override
+	public void onConnectionFailed(ConnectionResult connectionResult) {
+
+	}
 }

@@ -1,4 +1,4 @@
-package org.ShinRH.android.mocklocation.googlePlace;
+package org.ShinRH.android.mocklocation.place;
 
 import android.content.ContentValues;
 
@@ -16,7 +16,6 @@ public class SuggestPlace {
 	public SuggestPlace(String main_description,String gueryText) {
 		this.main_description = main_description;
 		this.gueryText = gueryText;
-		// TODO Auto-generated constructor stub
 	}
 	
 	@Override

@@ -12,7 +12,7 @@ import android.util.Log;
 
 import org.ShinRH.android.mocklocation.MockLocationService;
 import org.ShinRH.android.mocklocation.R;
-import org.ShinRH.android.mocklocation.googlePlace.Constants;
+import org.ShinRH.android.mocklocation.place.Constants;
 import org.ShinRH.android.mocklocation.utl.PreferencesUtils;
 
 public class SettingsActivity extends AbstractSettingsActivity {

@@ -84,7 +84,13 @@ public class MockLocationService extends Service implements
 		IDEL,
 		PAUSE_SCREEN_OFF,
 	}
-	
+
+    public enum ScreenState {
+        ON,
+        OFF,
+    }
+
+	private volatile ScreenState mScreenState;
 	private EnumMap<MockLocationServiceStatus, MockLocationServiceState> mStateEnumMap;
 	private MockLocationServiceState mState;
 	private MockLocationServiceStatus mMockLocationServiceStatus;
@@ -176,7 +182,7 @@ public class MockLocationService extends Service implements
 		
 		@Override
 		public void onCreate() {
-			Log.d(TAG,"onCreate do nothing ");
+			Log.d(TAG,"onCreate StartBroadcast ");
 			mockLocationService.handleStartBroadcast();
 		}
 				
@@ -236,7 +242,7 @@ public class MockLocationService extends Service implements
 			Log.d(TAG,"onCreate ");
 			// Start broadcast first to resume the icon and mock providers 
 			mockLocationService.handleStartBroadcast();
-			if (mockLocationService.mPowerManager.isScreenOn()){
+			if (mScreenState == ScreenState.ON){
 				mockLocationService.setState(MockLocationServiceStatus.BROADCASTING);
 			} else {
 				mockLocationService.setState(MockLocationServiceStatus.PAUSE_SCREEN_OFF);
@@ -351,12 +357,13 @@ public class MockLocationService extends Service implements
 		// Create state
 		int state = PreferencesUtils.getInt(this, 
 				R.string.mocklocationservice_state_key, MockLocationServiceStatus.IDEL.ordinal());
-		Log.d(TAG,"mocklocationservice_state" + state);
+        Log.d(TAG, "mocklocationservice_state" + state);
 		setState(MockLocationServiceStatus.values()[state]);
 		synchronized (mMockLocationServiceStatus) {
 			mState.onCreate();
-			
 		}
+
+        mScreenState = ScreenState.ON;
 		
 		// Create a location client for Google Play services
 		GoogleApiClient mGoogleApiClient = new GoogleApiClient.Builder(this)
@@ -539,14 +546,15 @@ public class MockLocationService extends Service implements
 
 			String action = intent.getAction();
 			if (action.equals(Intent.ACTION_SCREEN_ON)) {
-
+                mScreenState = ScreenState.ON;
 				Log.d(TAG, "ACTION_SCREEN ON Resume Broadcasting");
 				synchronized (mMockLocationServiceStatus) {
 					mState.onScreenOn();
 				}
 
-			} else if (action.equals(Intent.ACTION_SCREEN_OFF)) {
 
+			} else if (action.equals(Intent.ACTION_SCREEN_OFF)) {
+                mScreenState = ScreenState.OFF;
 				Log.d(TAG, "ACTION_SCREEN_OFF Pause Broadcasting");
 				synchronized (mMockLocationServiceStatus) {
 					mState.onScreenoff();

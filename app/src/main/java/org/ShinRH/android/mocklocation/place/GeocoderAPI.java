@@ -1,4 +1,4 @@
-package org.ShinRH.android.mocklocation.googlePlace;
+package org.ShinRH.android.mocklocation.place;
 
 
 import java.io.IOException;

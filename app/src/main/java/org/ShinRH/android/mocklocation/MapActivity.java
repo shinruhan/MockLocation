@@ -11,10 +11,10 @@ import java.util.List;
 import org.ShinRH.android.mocklocation.content.DataSource;
 import org.ShinRH.android.mocklocation.fragments.MapLayerDialogFragment;
 import org.ShinRH.android.mocklocation.fragments.MockLocationSettingsDialogFragment;
-import org.ShinRH.android.mocklocation.googlePlace.Constants;
+import org.ShinRH.android.mocklocation.place.Constants;
 import org.ShinRH.android.mocklocation.utl.ApiAdapterFactory;
+import org.ShinRH.android.mocklocation.utl.HandlerThreadHelper;
 import org.ShinRH.android.mocklocation.utl.PreferencesUtils;
-import org.ShinRH.android.mocklocation.utl.IntentUtils;
 import org.ShinRH.android.mocklocation.utl.LayoutUtils;
 import org.ShinRH.android.mocklocation.settings.*;
 import org.ShinRH.android.mocklocation.ad.*;
@@ -23,13 +23,9 @@ import org.ShinRH.android.mocklocation.ad.*;
 import com.google.android.gms.ads.AdView;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
-import com.google.android.gms.maps.GoogleMap.OnCameraChangeListener;
-import com.google.android.gms.maps.GoogleMap.OnMapLongClickListener;
-import com.google.android.gms.maps.GoogleMap.OnMarkerDragListener;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.LatLng;
-import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 
 
@@ -60,7 +56,6 @@ import android.database.Cursor;
 import android.graphics.drawable.Drawable;
 
 import android.support.v4.app.FragmentManager;
-import android.support.v4.view.MenuItemCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarActivity;
 import android.support.v7.widget.SearchView;
@@ -73,27 +68,18 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.CompoundButton;
 import android.widget.ListView;
-import android.widget.Toast;
 import android.widget.ToggleButton;
 public class MapActivity extends ActionBarActivity implements OnSharedPreferenceChangeListener {
-	
-	public static final String SHAREPREFERENCE = "MyGeofence";
-	public static final String MOCKBOTTOMSTATUS = "MockBottomStatus";
+
 	private static final String TAG = MapActivity.class.getName();
 	private ActionBar mActionBar;
-	private DrawerLayout mDrawerLayout;
 	private ToggleButton mToggleButton;
-	private HashMap<String, Integer> mMapStyle;
 	private GoogleMap mMap;
 	private LocationManager mLocationManager;
-	private Location mLocation;
 	private MockLocationServiceController mMockLocationServiceController;
 	private SearchView mSearchView;
-	private ListView mDrawerList;
 	private MapActivity mContext;
 	private DataSource mDataSource;
-	private Handler mHandler;
-	private HandlerThread mBackgroundThread;
 	private MyMarker mMarker;
 	private AdHelper mAdHelper;
 	
@@ -114,8 +100,7 @@ public class MapActivity extends ActionBarActivity implements OnSharedPreference
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_map);
 		mContext = this;
-		//mDrawerLayout   = (DrawerLayout) findViewById(R.id.drawer_layout);
-		//mDrawerList     = (ListView) findViewById(R.id.left_drawer);
+
 		mMockLocationServiceController = new MockLocationServiceController(this);
         mLocationManager= (LocationManager)getSystemService(Context.LOCATION_SERVICE);
         mActionBar = getSupportActionBar();
@@ -163,18 +148,13 @@ public class MapActivity extends ActionBarActivity implements OnSharedPreference
 	protected void onNewIntent(final Intent intent) {
 		Log.d(TAG, "onNewIntent");
 		setIntent(intent);
-		// TODO Auto-generated method stub
 		handleSearchIntent(intent);
-
 		super.onNewIntent(intent);
 	}
 
 	@Override
 	protected void onPostResume () {
 		Log.d(TAG, "onPostResume");
-		//mBackgroundThread = new HandlerThread("MyGeofence",Process.THREAD_PRIORITY_BACKGROUND);
-		//mBackgroundThread.start();
-		//mHandler = new Handler(mBackgroundThread.getLooper());
 		mDataSource.registerOnSharedPreferenceChangeListener(this);
 		mMockLocationServiceController.onPostResume();
 		super.onPostResume();
@@ -201,11 +181,6 @@ public class MapActivity extends ActionBarActivity implements OnSharedPreference
 	@Override
 	protected void onStop() {
 		Log.d(TAG, "onStop");
-		//if (mBackgroundThread != null) {
-		//	mBackgroundThread.quit();
-		//	mBackgroundThread = null;
-		//}
-		mHandler = null;
 		mDataSource.unregisterOnSharedPreferenceChangeListener(this);
 		mMarker.onStop();
 		mMockLocationServiceController.onStop();
@@ -604,7 +579,7 @@ public class MapActivity extends ActionBarActivity implements OnSharedPreference
 	private void moveToCameraPosition(CameraPosition cameraPosition ,int durationMs) {
 		
 		if(checkMap()) {
-			mMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition),durationMs,null);
+			mMap.animateCamera(CameraUpdateFactory.newCameraPosition(cameraPosition), durationMs, null);
 		}
 	}
 	
@@ -615,16 +590,14 @@ public class MapActivity extends ActionBarActivity implements OnSharedPreference
 	 */
 	private void moveToLocation(final Location loc , final int durationMs) {
 		if(checkMap()) {
-			
 			runOnUiThread(new Runnable() {
-				
-				@Override
-				public void run() {
-					// TODO Auto-generated method stub
-					mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(
-					loc.getLatitude(),loc.getLongitude()), 5), durationMs, null);
-				}
-			});
+
+                @Override
+                public void run() {
+                    mMap.animateCamera(CameraUpdateFactory.newLatLng(new LatLng(
+                            loc.getLatitude(), loc.getLongitude())), durationMs, null);
+                }
+            });
 			
 		}
 	}
@@ -636,17 +609,59 @@ public class MapActivity extends ActionBarActivity implements OnSharedPreference
 	 */
 	private void moveToLocation(final LatLng latLng , final int durationMs) {
 		if(checkMap()) {
-			mMap.animateCamera(CameraUpdateFactory.newLatLng(latLng), durationMs, null);
-			
+            runOnUiThread(new Runnable() {
+
+                @Override
+                public void run() {
+                    mMap.animateCamera(CameraUpdateFactory.newLatLng(latLng), durationMs, null);
+                }
+            });
 		}	
 	}
+
+    /**
+     * Move Camera to Latlng position
+     * @param latLng
+     * @param durationMs
+     * @param zoomLevel zoomLevel
+     */
+    private void moveToLocationZoom (final LatLng latLng , final int durationMs , final int zoomLevel) {
+        if(checkMap()) {
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(latLng, zoomLevel), durationMs, null);
+                }
+            });
+        }
+    }
+
+    /**
+     * Move camera to given {@link Location}
+     * @param loc {@link Location} to move
+     * @param durationMs durationMs The duration of the animation in milliseconds.
+     * @param zoomLevel zoomLevel
+     */
+    private void moveToLocationZoom (final Location loc , final int durationMs , final int zoomLevel) {
+        if(checkMap()) {
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    // TODO Auto-generated method stub
+                    mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(
+                            loc.getLatitude(), loc.getLongitude()), zoomLevel), durationMs, null);
+                }
+            });
+        }
+    }
+
 
 	private void moveToLastKnownLocation() {
 		
 		Location lastlocation = mLocationManager.getLastKnownLocation(LocationManager.PASSIVE_PROVIDER);
 		Log.d(TAG, "Got last know location " + lastlocation);
-		if(lastlocation != null) {		
-			moveToLocation(lastlocation,2000);
+		if(lastlocation != null) {
+            moveToLocationZoom(lastlocation, 2000, 10);
 		}
 		
 	}
@@ -834,11 +849,11 @@ public class MapActivity extends ActionBarActivity implements OnSharedPreference
 	private class MockLocationServiceController implements ServiceConnection {
 
 		public int mRemoteMockLocationServiceStatus;
+        private boolean mIsBound;
 		private MapActivity mMapActivity;
 		private Intent mIntent;
 		private Messenger mMockLocationService;
 		private Messenger mMessenger;
-		private boolean mIsBound;
 		private HandlerThread mthread;
 		private MockLocationServiceHandler mMockLocationServiceHandler;
 		private Location mserviceLocation;
@@ -877,17 +892,15 @@ public class MapActivity extends ActionBarActivity implements OnSharedPreference
 		}
 		
 		public void onPostResume() {
-			
-			mthread = new HandlerThread("MockLocationServiceProxy");
+
+			mthread = HandlerThreadHelper.createHandlerThread("MockLocationServiceProxy");
 			try {
-				mthread.start();
 				mMockLocationServiceHandler = new MockLocationServiceHandler(
 						mthread.getLooper());
 				mMessenger = new Messenger(mMockLocationServiceHandler);
 			} catch (IllegalThreadStateException e) {
 				e.printStackTrace();
 			}
-
 			Log.d(TAG, "mthread state  " + mthread.getState());
 
 			if (mIsBound == false) {

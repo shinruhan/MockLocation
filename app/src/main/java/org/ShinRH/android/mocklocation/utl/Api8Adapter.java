@@ -2,8 +2,10 @@ package org.ShinRH.android.mocklocation.utl;
 
 import android.annotation.TargetApi;
 import android.app.Activity;
+import android.content.Context;
 import android.content.SharedPreferences.Editor;
 import android.location.Location;
+import android.os.PowerManager;
 
 
 @TargetApi(8)
@@ -36,9 +38,14 @@ public class Api8Adapter implements ApiAdapter{
 	public void makeLocationComplete(Location location) {
 		// TODO Auto-generated method stub
 		// do nothing
-		if(!location.hasAccuracy()) location.setAccuracy(100);
-		if(location.getTime() == 0) location.setTime(System.currentTimeMillis());
+		if (!location.hasAccuracy()) location.setAccuracy(100);
+		if (location.getTime() == 0) location.setTime(System.currentTimeMillis());
 	}
 
+	@Override
+	public boolean isScreenOn(Context context) {
+		PowerManager powerManager = (PowerManager)context.getSystemService(Context.POWER_SERVICE);
+		return powerManager.isScreenOn();
+	}
 
 }

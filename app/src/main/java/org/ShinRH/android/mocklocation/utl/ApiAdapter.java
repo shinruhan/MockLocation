@@ -2,6 +2,7 @@ package org.ShinRH.android.mocklocation.utl;
 
 import android.app.Activity;
 import android.app.Notification;
+import android.content.Context;
 import android.content.SharedPreferences;
 import android.location.Location;
 
@@ -55,5 +56,12 @@ public interface ApiAdapter {
 	 */
 	public void makeLocationComplete(Location location);
 
-	 
+
+	/**
+	 * Check screen on or not  .
+	 * <p>
+	 * Due to changes in API level 20.
+	 */
+	public boolean isScreenOn(Context context);
+
 }
