@@ -2,8 +2,11 @@ apply plugin: 'com.android.application'
 
 android {
     signingConfigs {
-        platform {
-            storeFile file('/Users/Shin/Dropbox/WorkSpace/Android/KeyStore/platform.jks')
+        shin {
+            keyAlias RELEASE_KEY_ALIAS
+            keyPassword RELEASE_KEY_PASSWORD
+            storeFile file(RELEASE_STORE_FILE)
+            storePassword RELEASE_KEY_PASSWORD
         }
     }
     compileSdkVersion 22
@@ -12,20 +15,25 @@ android {
         applicationId "org.ShinRH.android.mocklocation"
         minSdkVersion 11
         targetSdkVersion 22
-        signingConfig signingConfigs.platform
+        signingConfig signingConfigs.shin
     }
     buildTypes {
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.txt'
             debuggable true
-            signingConfig signingConfigs.platform
+            signingConfig signingConfigs.shin
         }
         debug {
-            debuggable true
+            debuggable false
+            signingConfig signingConfigs.shin
         }
     }
     productFlavors {
+    }
+
+    lintOptions {
+        abortOnError false
     }
 }
 
