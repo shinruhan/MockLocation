@@ -1,21 +1,19 @@
 apply plugin: 'com.android.application'
 
 android {
+
+    compileSdkVersion 22
+    buildToolsVersion "22.0.1"
+
     signingConfigs {
+
         shin {
             keyAlias RELEASE_KEY_ALIAS
             keyPassword RELEASE_KEY_PASSWORD
-            storeFile file(RELEASE_STORE_FILE)
+            storeFile new File(RELEASE_STORE_FILE)
             storePassword RELEASE_KEY_PASSWORD
         }
-    }
-    compileSdkVersion 22
-    buildToolsVersion "22.0.1"
-    defaultConfig {
-        applicationId "org.ShinRH.android.mocklocation"
-        minSdkVersion 11
-        targetSdkVersion 22
-        signingConfig signingConfigs.shin
+
     }
     buildTypes {
         release {
@@ -29,11 +27,20 @@ android {
             signingConfig signingConfigs.shin
         }
     }
-    productFlavors {
+
+    defaultConfig {
+        applicationId "org.ShinRH.android.mocklocation"
+        minSdkVersion 11
+        targetSdkVersion 22
+        signingConfig signingConfigs.shin
     }
+
 
     lintOptions {
         abortOnError false
+    }
+
+    productFlavors {
     }
 }
 
