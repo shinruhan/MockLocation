@@ -1,16 +1,13 @@
 package org.ShinRH.android.mocklocation.place;
 
 
-import java.util.ArrayList;
-import java.util.List;
-
-
 import android.content.BroadcastReceiver;
 import android.content.ContentProvider;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.SharedPreferences;
 import android.content.UriMatcher;
 import android.database.Cursor;
 import android.net.ConnectivityManager;
@@ -23,12 +20,14 @@ import android.util.Log;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
-import com.google.android.gms.common.api.GoogleApiClient.ConnectionCallbacks;
-import com.google.android.gms.common.api.GoogleApiClient.OnConnectionFailedListener;
-import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.location.places.Places;
 
-public class SearchPlaceContentProvider extends ContentProvider implements
-		ConnectionCallbacks, OnConnectionFailedListener {
+import java.util.ArrayList;
+import java.util.List;
+
+
+public class SearchPlaceContentProvider extends ContentProvider implements SharedPreferences.OnSharedPreferenceChangeListener,
+		GoogleApiClient.ConnectionCallbacks,GoogleApiClient.OnConnectionFailedListener {
 	
 	private static final String TAG =  SearchPlaceContentProvider.class.getName();
 	private final UriMatcher mUriMatcher;
@@ -72,14 +71,14 @@ public class SearchPlaceContentProvider extends ContentProvider implements
 		}
 		mDB      		 = new SearchPlacesDB(mContext);
 		mGeocoderAPI     = new GeocoderAPI(mContext);
-
 		// Create a GoogleApiClient instance
+
 		mGoogleApiClient = new GoogleApiClient.Builder(mContext)
-				.addApi(LocationServices.API)
+				.addApi(Places.GEO_DATA_API)
+				.addApi(Places.PLACE_DETECTION_API)
 				.addConnectionCallbacks(this)
 				.addOnConnectionFailedListener(this)
 				.build();
-        mGoogleApiClient.connect();
 
 		mIsNetworkAvaialable = isDeviceOnline();
 
@@ -288,6 +287,11 @@ public class SearchPlaceContentProvider extends ContentProvider implements
 
 	@Override
 	public void onConnectionFailed(ConnectionResult connectionResult) {
+
+	}
+
+	@Override
+	public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
 
 	}
 }

@@ -1,35 +1,19 @@
 package org.ShinRH.android.mocklocation;
 
 
-import java.io.FileDescriptor;
-
-import java.io.PrintWriter;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-
-import org.ShinRH.android.mocklocation.content.DataSource;
-import org.ShinRH.android.mocklocation.fragments.MapLayerDialogFragment;
-import org.ShinRH.android.mocklocation.fragments.MockLocationSettingsDialogFragment;
-import org.ShinRH.android.mocklocation.place.Constants;
-import org.ShinRH.android.mocklocation.utl.ApiAdapterFactory;
-import org.ShinRH.android.mocklocation.utl.HandlerThreadHelper;
-import org.ShinRH.android.mocklocation.utl.PreferencesUtils;
-import org.ShinRH.android.mocklocation.utl.LayoutUtils;
-import org.ShinRH.android.mocklocation.settings.*;
-import org.ShinRH.android.mocklocation.ad.*;
-
-
-import com.google.android.gms.ads.AdView;
-import com.google.android.gms.maps.CameraUpdateFactory;
-import com.google.android.gms.maps.GoogleMap;
-import com.google.android.gms.maps.SupportMapFragment;
-import com.google.android.gms.maps.model.CameraPosition;
-import com.google.android.gms.maps.model.LatLng;
-import com.google.android.gms.maps.model.MarkerOptions;
-
-
-
+import android.app.Dialog;
+import android.app.DialogFragment;
+import android.app.SearchManager;
+import android.content.ComponentName;
+import android.content.Context;
+import android.content.DialogInterface;
+import android.content.Intent;
+import android.content.IntentSender.SendIntentException;
+import android.content.ServiceConnection;
+import android.content.SharedPreferences;
+import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
+import android.database.Cursor;
+import android.graphics.drawable.Drawable;
 import android.location.Location;
 import android.location.LocationManager;
 import android.net.Uri;
@@ -43,23 +27,10 @@ import android.os.Message;
 import android.os.Messenger;
 import android.os.RemoteException;
 import android.provider.Settings;
-
-
-import android.app.SearchManager;
-import android.content.ComponentName;
-import android.content.Context;
-import android.content.Intent;
-import android.content.ServiceConnection;
-import android.content.SharedPreferences;
-import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
-import android.database.Cursor;
-import android.graphics.drawable.Drawable;
-
 import android.support.v4.app.FragmentManager;
-import android.support.v4.widget.DrawerLayout;
+import android.support.v7.app.ActionBar;
 import android.support.v7.app.ActionBarActivity;
 import android.support.v7.widget.SearchView;
-import android.support.v7.app.ActionBar;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -67,56 +38,190 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.CompoundButton;
-import android.widget.ListView;
 import android.widget.ToggleButton;
-public class MapActivity extends ActionBarActivity implements OnSharedPreferenceChangeListener {
 
-	private static final String TAG = MapActivity.class.getName();
-	private ActionBar mActionBar;
-	private ToggleButton mToggleButton;
-	private GoogleMap mMap;
-	private LocationManager mLocationManager;
-	private MockLocationServiceController mMockLocationServiceController;
-	private SearchView mSearchView;
-	private MapActivity mContext;
-	private DataSource mDataSource;
-	private MyMarker mMarker;
-	private AdHelper mAdHelper;
-	
-	private List<OnCheckChangedListener> mCheckChangedListener = new ArrayList<OnCheckChangedListener>();
-	private List<OnMapClickListener> mMapClickListener = new ArrayList<OnMapClickListener>();
-	
-	public interface OnCheckChangedListener {
-	    public boolean onCheckChanged(CompoundButton buttonView, boolean isChecked);
-	}
-	
-	public interface OnMapClickListener {
-		public boolean onMapClick(LatLng latLng) ;
-	}
-	
-	@Override
-	protected void onCreate(Bundle savedInstanceState) {
-		Log.d(TAG, "onCreate");
-		super.onCreate(savedInstanceState);
-		setContentView(R.layout.activity_map);
-		mContext = this;
+import com.google.android.gms.ads.AdView;
+import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.GooglePlayServicesUtil;
+import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.common.api.GoogleApiClient.ConnectionCallbacks;
+import com.google.android.gms.common.api.GoogleApiClient.OnConnectionFailedListener;
+import com.google.android.gms.location.places.Places;
+import com.google.android.gms.maps.CameraUpdateFactory;
+import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.SupportMapFragment;
+import com.google.android.gms.maps.model.CameraPosition;
+import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.MarkerOptions;
 
-		mMockLocationServiceController = new MockLocationServiceController(this);
-        mLocationManager= (LocationManager)getSystemService(Context.LOCATION_SERVICE);
+import org.ShinRH.android.mocklocation.ad.AdHelper;
+import org.ShinRH.android.mocklocation.content.DataSource;
+import org.ShinRH.android.mocklocation.fragments.MapLayerDialogFragment;
+import org.ShinRH.android.mocklocation.fragments.MockLocationSettingsDialogFragment;
+import org.ShinRH.android.mocklocation.place.Constants;
+import org.ShinRH.android.mocklocation.settings.SettingsActivity;
+import org.ShinRH.android.mocklocation.utl.ApiAdapterFactory;
+import org.ShinRH.android.mocklocation.utl.HandlerThreadHelper;
+import org.ShinRH.android.mocklocation.utl.LayoutUtils;
+import org.ShinRH.android.mocklocation.utl.PreferencesUtils;
+
+import java.io.FileDescriptor;
+import java.io.PrintWriter;
+import java.util.ArrayList;
+import java.util.List;
+
+
+public class MapActivity extends ActionBarActivity implements OnSharedPreferenceChangeListener ,
+        ConnectionCallbacks ,OnConnectionFailedListener {
+
+    private static final String TAG = MapActivity.class.getName();
+    private ActionBar mActionBar;
+    private ToggleButton mToggleButton;
+    private GoogleMap mMap;
+    private LocationManager mLocationManager;
+    private MockLocationServiceController mMockLocationServiceController;
+    private SearchView mSearchView;
+    private MapActivity mContext;
+    private DataSource mDataSource;
+    private MyMarker mMarker;
+    private AdHelper mAdHelper;
+
+    //Google Api client
+    private GoogleApiClient mGoogleApiClient;
+    // Request code to use when launching the resolution activity
+    private static final int REQUEST_RESOLVE_ERROR = 1001;
+    // Unique tag for the error dialog fragment
+    private static final String DIALOG_ERROR = "dialog_error";
+    // Bool to track whether the app is already resolving an error
+    private boolean mResolvingError = false;
+
+
+    private List<OnCheckChangedListener> mCheckChangedListener = new ArrayList<OnCheckChangedListener>();
+    private List<OnMapClickListener> mMapClickListener = new ArrayList<OnMapClickListener>();
+
+
+    //Google Api client +++++++++
+    @Override
+    public void onConnected(Bundle bundle) {
+
+    }
+
+    @Override
+    public void onConnectionSuspended(int i) {
+
+    }
+
+    @Override
+    public void onConnectionFailed(ConnectionResult result) {
+
+        if (mResolvingError) {
+            // Already attempting to resolve an error.
+            return;
+        } else if (result.hasResolution()) {
+            try {
+                mResolvingError = true;
+                result.startResolutionForResult(this, REQUEST_RESOLVE_ERROR);
+            } catch (SendIntentException e) {
+                // There was an error with the resolution intent. Try again.
+                mGoogleApiClient.connect();
+            }
+        } else {
+            // Show dialog using GooglePlayServicesUtil.getErrorDialog()
+            showErrorDialog(result.getErrorCode());
+            mResolvingError = true;
+        }
+
+    }
+    // The rest of this code is all about building the error dialog
+
+    /* Creates a dialog for an error message */
+    private void showErrorDialog(int errorCode) {
+        // Create a fragment for the error dialog
+        ErrorDialogFragment dialogFragment = new ErrorDialogFragment();
+        // Pass the error that should be displayed
+        Bundle args = new Bundle();
+        args.putInt(DIALOG_ERROR, errorCode);
+        dialogFragment.setArguments(args);
+        dialogFragment.show(this.getFragmentManager(), "errordialog");
+    }
+
+    /* Called from ErrorDialogFragment when the dialog is dismissed. */
+    public void onDialogDismissed() {
+        mResolvingError = false;
+    }
+
+    /* A fragment to display an error dialog */
+    public static class ErrorDialogFragment extends DialogFragment {
+        public ErrorDialogFragment() { }
+
+        @Override
+        public Dialog onCreateDialog(Bundle savedInstanceState) {
+            // Get the error code and retrieve the appropriate dialog
+            int errorCode = this.getArguments().getInt(DIALOG_ERROR);
+            return GooglePlayServicesUtil.getErrorDialog(errorCode,
+                    this.getActivity(), REQUEST_RESOLVE_ERROR);
+        }
+
+        @Override
+        public void onDismiss(DialogInterface dialog) {
+            ((MapActivity)getActivity()).onDialogDismissed();
+        }
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if (requestCode == REQUEST_RESOLVE_ERROR) {
+            mResolvingError = false;
+            if (resultCode == RESULT_OK) {
+                // Make sure the app is not already connected or attempting to connect
+                if (!mGoogleApiClient.isConnecting() &&
+                        !mGoogleApiClient.isConnected()) {
+                    mGoogleApiClient.connect();
+                }
+            }
+        }
+    }
+    //Google Api client -------
+
+    public interface OnCheckChangedListener {
+        public boolean onCheckChanged(CompoundButton buttonView, boolean isChecked);
+    }
+
+    public interface OnMapClickListener {
+        public boolean onMapClick(LatLng latLng);
+    }
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        Log.d(TAG, "onCreate");
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_map);
+        mContext = this;
+
+        mMockLocationServiceController = new MockLocationServiceController(this);
+        mLocationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
         mActionBar = getSupportActionBar();
         mActionBar.show();
         Log.d(TAG, "ActionBar is showing " + mActionBar.isShowing());
         mDataSource = new DataSource(this);
-        
+
         mAdHelper = new AdHelper(this,
-        		(AdView)findViewById(R.id.adView),
-        		getString(R.string.admod_testdevice_id_m8));
+                (AdView) findViewById(R.id.adView),
+                getString(R.string.admod_testdevice_id_m8));
+
+        // Create a GoogleApiClient instance
+        mGoogleApiClient = new GoogleApiClient.Builder(this)
+                .addApi(Places.GEO_DATA_API)
+                .addApi(Places.PLACE_DETECTION_API)
+                .addConnectionCallbacks(this)
+                .addOnConnectionFailedListener(this)
+                .build();
 
         initMap(savedInstanceState);
         initBottom();
-        LayoutUtils.dumpLayout((ViewGroup)this.getWindow().getDecorView(), 0);
-              
-	}
+        LayoutUtils.dumpLayout((ViewGroup) this.getWindow().getDecorView(), 0);
+
+    }
 
 
 	@Override
@@ -177,13 +282,23 @@ public class MapActivity extends ActionBarActivity implements OnSharedPreference
 		mAdHelper.onDestroy();
 		super.onDestroy();
 	}
-	
-	@Override
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        if(!mResolvingError)
+        {  // more about this later
+            mGoogleApiClient.connect();
+        }
+    }
+
+    @Override
 	protected void onStop() {
 		Log.d(TAG, "onStop");
 		mDataSource.unregisterOnSharedPreferenceChangeListener(this);
-		mMarker.onStop();
+        mMarker.onStop();
 		mMockLocationServiceController.onStop();
+        mGoogleApiClient.disconnect();
 		super.onStop();
 	}
 	
@@ -210,8 +325,6 @@ public class MapActivity extends ActionBarActivity implements OnSharedPreference
 
 	}
 
-
-	
 	private void configSearchView(Menu menu) {
 		
 		// Get the SearchView and set the searchable configuration

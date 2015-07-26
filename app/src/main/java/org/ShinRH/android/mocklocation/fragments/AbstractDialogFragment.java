@@ -1,11 +1,11 @@
 package org.ShinRH.android.mocklocation.fragments;
 
-import org.ShinRH.android.mocklocation.utl.DialogUtils;
-
 import android.app.Dialog;
+import android.app.DialogFragment;
 import android.content.DialogInterface;
 import android.os.Bundle;
-import android.app.DialogFragment;
+
+import org.ShinRH.android.mocklocation.utl.DialogUtils;
 public abstract class AbstractDialogFragment extends DialogFragment{
 
 	  @Override
