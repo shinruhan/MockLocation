@@ -191,23 +191,22 @@ public class MapActivity extends ActionBarActivity implements OnSharedPreference
         public boolean onMapClick(LatLng latLng);
     }
 
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        Log.d(TAG, "onCreate");
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_map);
-        mContext = this;
+	@Override
+	protected void onCreate(Bundle savedInstanceState) {
+		Log.d(TAG, "onCreate");
+		super.onCreate(savedInstanceState);
+		setContentView(R.layout.activity_map);
+		mContext = this;
 
-        mMockLocationServiceController = new MockLocationServiceController(this);
-        mLocationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
-        mActionBar = getSupportActionBar();
-        mActionBar.show();
-        Log.d(TAG, "ActionBar is showing " + mActionBar.isShowing());
+		mMockLocationServiceController = new MockLocationServiceController(this);
+        mLocationManager= (LocationManager)getSystemService(Context.LOCATION_SERVICE);
+
         mDataSource = new DataSource(this);
 
         mAdHelper = new AdHelper(this,
-                (AdView) findViewById(R.id.adView),
-                getString(R.string.admod_testdevice_id_m8));
+        		(AdView)findViewById(R.id.adView),
+        		getString(R.string.admod_testdevice_id_m8),
+				getString(R.string.mocklocation_interstitial_id));
 
         // Create a GoogleApiClient instance
         mGoogleApiClient = new GoogleApiClient.Builder(this)
@@ -358,13 +357,13 @@ public class MapActivity extends ActionBarActivity implements OnSharedPreference
 						//clear query and collapse search view
 						//mSearchView.setQuery("",false);
 						//mSearchView.setIconified(true);
-						Log.d(TAG, "onQueryTextSubmit query" + query);
+						Log.d(TAG, "onQueryTextSubmit query " + query);
 						return false;
 					}
 
 					@Override
 					public boolean onQueryTextChange(String newText) {
-						Log.d(TAG, "onQueryTextChange newText" + newText);
+						Log.d(TAG, "onQueryTextChange newText " + newText);
 						return false;
 					}
 				});

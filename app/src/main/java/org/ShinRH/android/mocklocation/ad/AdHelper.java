@@ -23,7 +23,7 @@ public class AdHelper extends AdListener {
 	private InterstitialAd mInterstitial;
 	private AdRequest mAdRequest;
 	
-	public AdHelper(Context context, AdView adview, String device_id) {
+	public AdHelper(Context context, AdView adview, String device_id , String interstitial_id) {
 		this.mContext = context;
 		this.mAdView = adview;
 
@@ -39,7 +39,7 @@ public class AdHelper extends AdListener {
 		mAdRequest = builder.build();
 		
 		mInterstitial = new InterstitialAd(mContext);
-	    mInterstitial.setAdUnitId(MyContext.getInstance().getString(R.string.mocklocation_interstitial_id));
+	    mInterstitial.setAdUnitId(interstitial_id);
 	    
 		mAdView.loadAd(mAdRequest);
 		mInterstitial.loadAd(mAdRequest);

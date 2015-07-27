@@ -22,16 +22,18 @@ import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.places.Places;
 
+import org.ShinRH.android.mocklocation.MyContext;
+import org.ShinRH.android.mocklocation.R;
+
 import java.util.ArrayList;
 import java.util.List;
-
 
 public class SearchPlaceContentProvider extends ContentProvider implements SharedPreferences.OnSharedPreferenceChangeListener,
 		GoogleApiClient.ConnectionCallbacks,GoogleApiClient.OnConnectionFailedListener {
 	
 	private static final String TAG =  SearchPlaceContentProvider.class.getName();
-	private final UriMatcher mUriMatcher;
-	private final GooglePlacesApi mGooglePlacesApi;
+	private UriMatcher mUriMatcher;
+	private GooglePlacesApi mGooglePlacesApi;
 	private GoogleApiClient mGoogleApiClient;
 	private SearchPlacesDB mDB;
 	private GeocoderAPI mGeocoderAPI;
@@ -40,23 +42,8 @@ public class SearchPlaceContentProvider extends ContentProvider implements Share
 	
 	public SearchPlaceContentProvider() {
 		
-		//the code returned for URI match to components
-		mUriMatcher = new UriMatcher(UriMatcher.NO_MATCH);
-		mUriMatcher.addURI(Constants.SearchSuggestion.AUTHORITY_SEARCHPLACE,
-				Constants.SearchSuggestion.SUGGEST_URI_PATH_QUERY+"/*" , 
-				Constants.SearchSuggestion.SEARCHPLACETABLE_URI_CODE_KEYWORD_QUERY);
-		mUriMatcher.addURI(Constants.SearchSuggestion.AUTHORITY_SEARCHPLACE,
-				Constants.SearchSuggestion.SUGGEST_URI_PATH_DELTEALL , 
-				Constants.SearchSuggestion.SEARCHPLACETABLE_URI_CODE_DELTE_ALL);
-		// SUGGEST_URI_PATH_UPDATE_RECENTPLACE/123.2222,34.222
-		mUriMatcher.addURI(Constants.SearchSuggestion.AUTHORITY_SEARCHPLACE,
-				Constants.SearchSuggestion.SUGGEST_URI_PATH_UPDATE_RECENTPLACE+"/*/*" , 
-				Constants.SearchSuggestion.SEARCHPLACETABLE_URI_CODE_UPDATE_RECENTPLACE);
-		mUriMatcher.addURI(Constants.SearchSuggestion.AUTHORITY_SEARCHPLACE,
-				Constants.SearchSuggestion.SUGGEST_URI_PATH_QUERY+"/" , 
-				Constants.SearchSuggestion.SEARCHPLACETABLE_URI_CODE_RECENTPLACE_QUERY);
-		
-		mGooglePlacesApi = new GooglePlacesApi(Constants.SearchSuggestion.PlacesApiKey);
+
+
 	}
 
 	@Override
@@ -84,8 +71,26 @@ public class SearchPlaceContentProvider extends ContentProvider implements Share
 
 		IntentFilter filter = new IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION);        
 		mContext.registerReceiver(networkStateReceiver, filter);
-		
-		return true;
+
+		mGooglePlacesApi = new GooglePlacesApi(mGoogleApiClient);
+
+        //the code returned for URI match to components
+        mUriMatcher = new UriMatcher(UriMatcher.NO_MATCH);
+        mUriMatcher.addURI(Constants.SearchSuggestion.AUTHORITY_SEARCHPLACE,
+                Constants.SearchSuggestion.SUGGEST_URI_PATH_QUERY+"/*" ,
+                Constants.SearchSuggestion.SEARCHPLACETABLE_URI_CODE_KEYWORD_QUERY);
+        mUriMatcher.addURI(Constants.SearchSuggestion.AUTHORITY_SEARCHPLACE,
+                Constants.SearchSuggestion.SUGGEST_URI_PATH_DELTEALL ,
+                Constants.SearchSuggestion.SEARCHPLACETABLE_URI_CODE_DELTE_ALL);
+        // SUGGEST_URI_PATH_UPDATE_RECENTPLACE/123.2222,34.222
+        mUriMatcher.addURI(Constants.SearchSuggestion.AUTHORITY_SEARCHPLACE,
+                Constants.SearchSuggestion.SUGGEST_URI_PATH_UPDATE_RECENTPLACE + "/*/*",
+                Constants.SearchSuggestion.SEARCHPLACETABLE_URI_CODE_UPDATE_RECENTPLACE);
+        mUriMatcher.addURI(Constants.SearchSuggestion.AUTHORITY_SEARCHPLACE,
+                Constants.SearchSuggestion.SUGGEST_URI_PATH_QUERY+"/" ,
+                Constants.SearchSuggestion.SEARCHPLACETABLE_URI_CODE_RECENTPLACE_QUERY);
+
+        return true;
 	}
 
 	@Override
@@ -110,11 +115,11 @@ public class SearchPlaceContentProvider extends ContentProvider implements Share
 			if(mIsNetworkAvaialable && mDB.ifNeedUpdate(query)){
 				Log.d(TAG,"query:" + query);
 				
-				//ArrayList<SuggestPlace> suggestPlacesList = mGeocoderAPI.getPlaceSuggestions(query);
+				ArrayList<SuggestPlace> suggestPlacesList = mGeocoderAPI.getPlaceSuggestions(query);
 				//if (suggestPlacesList == null ) {
 				//	Log.d(TAG,"query from Geocoder fail try GooglePlaceAPI");
 					// TO DO  need to use google place api or not ?? 
-				ArrayList<SuggestPlace> suggestPlacesList = mGooglePlacesApi.getPlaceSuggestions(query);
+				//ArrayList<SuggestPlace> suggestPlacesList = mGooglePlacesApi.getPlaceSuggestions(query);
 				//}
 				
 				mDB.insertGooglePlaces(suggestPlacesList);

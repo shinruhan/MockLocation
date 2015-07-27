@@ -4,19 +4,16 @@ package org.ShinRH.android.mocklocation.place;
 import android.provider.BaseColumns;
 import android.app.SearchManager;
 
-
+import org.ShinRH.android.mocklocation.MyContext;
+import org.ShinRH.android.mocklocation.R;
 public class Constants {
 	
 	public static final boolean DEBUG = true;
 	public static final boolean VERBODE = false;
 	
 	public class SearchSuggestion implements BaseColumns {
-		
-		
-		public static final String PlacesApiKey = "AIzaSyDRs_BzeppLde5YbHMwDPFZ6D0pBqWx3wg";
-		
-		public static final String AUTHORITY_SEARCHPLACE = "org.ShinRH.android.mocklocation.googlePlace.SearchPlaceContentProvider";
-		
+
+		public static final String AUTHORITY_SEARCHPLACE = "org.ShinRH.android.mocklocation.place.SearchPlaceContentProvider";
 		//the code returned for URI match to components
 		public static final int    SEARCHPLACETABLE_URI_CODE_KEYWORD_QUERY = 1;
 		
