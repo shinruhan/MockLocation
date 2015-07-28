@@ -14,6 +14,7 @@ import android.graphics.BitmapFactory;
 import android.location.Location;
 import android.location.LocationManager;
 import android.location.LocationProvider;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.HandlerThread;
@@ -32,7 +33,9 @@ import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.common.api.GoogleApiClient.ConnectionCallbacks;
 import com.google.android.gms.common.api.GoogleApiClient.OnConnectionFailedListener;
+import com.google.android.gms.common.api.PendingResult;
 import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.common.api.Status;
 
 import org.ShinRH.android.mocklocation.utl.ApiAdapterFactory;
 import org.ShinRH.android.mocklocation.utl.PreferencesUtils;
@@ -41,7 +44,9 @@ import java.lang.ref.WeakReference;
 import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
+import static android.os.AsyncTask.*;
 public class MockLocationService extends Service implements
 		ConnectionCallbacks, OnConnectionFailedListener {
 	
@@ -559,9 +564,7 @@ public class MockLocationService extends Service implements
 				synchronized (mMockLocationServiceStatus) {
 					mState.onScreenoff();
 				}
-
 			}
-
 		}
 
 	};
@@ -573,7 +576,11 @@ public class MockLocationService extends Service implements
 		
 		// Replace location provider for Google Location Service
 		if(mGoogleApiClient != null && mGoogleApiClient.isConnected()){
-			LocationServices.FusedLocationApi.setMockMode(mGoogleApiClient,true);
+            PendingResult<Status> ret = LocationServices.FusedLocationApi.setMockMode(mGoogleApiClient, true);
+            final Status status = ret.await(1, TimeUnit.SECONDS);
+            if (!status.isSuccess()) {
+                Log.d(TAG,"setMockMode fail");
+            }
 		}
 		
 		Message m = Message.obtain(mBackgroundHandler, MSG_BROADCAST_LOCATION);
@@ -597,7 +604,11 @@ public class MockLocationService extends Service implements
 		// Remove location provider for Google Location Service
 		if (mGoogleApiClient != null && mGoogleApiClient.isConnected()) {
 			try {
-				LocationServices.FusedLocationApi.setMockMode(mGoogleApiClient,false);
+                PendingResult<Status> ret = LocationServices.FusedLocationApi.setMockMode(mGoogleApiClient,false);
+                final Status status = ret.await(1, TimeUnit.SECONDS);
+                if (!status.isSuccess()) {
+                    Log.d(TAG,"setMockMode fail");
+                }
 			} catch (SecurityException e) {
 				e.printStackTrace();
 			}
@@ -626,7 +637,11 @@ public class MockLocationService extends Service implements
 						.setTestProviderLocation(providerName, location);
 
 				if (mGoogleApiClient != null && mGoogleApiClient.isConnected()) {
-					LocationServices.FusedLocationApi.setMockLocation(mGoogleApiClient,location);
+                    PendingResult<Status> ret = LocationServices.FusedLocationApi.setMockLocation(mGoogleApiClient,location);
+                    final Status status = ret.await(1, TimeUnit.SECONDS);
+                    if (!status.isSuccess()) {
+                        Log.d(TAG," FusedLocationApi setMockLocation fail");
+                    }
 				}
 			} catch (SecurityException e) {
 				e.printStackTrace();
@@ -694,8 +709,9 @@ public class MockLocationService extends Service implements
 
 	}
 
-	private void setLocation(Location mlocation) {
-		this.mlocation = mlocation;
+	private void setLocation(Location location) {
+		Log.d(TAG , "setLocation " + location);
+		this.mlocation = location;
 	}
 	
 	/**
@@ -703,12 +719,11 @@ public class MockLocationService extends Service implements
 	 */
 	private Location getLocation() {
 		if(mlocation == null) {
+			Log.d(TAG , " mlocation == null " );
 			Location location = new Location("");
 			ApiAdapterFactory.getApiAdapter().makeLocationComplete(location);
 			return location;
-		} else {			
-			// TO DO test randon bearing 
-			mlocation.setBearing((float) Math.random()*360);
+		} else {
 			return mlocation;
 		}
 		

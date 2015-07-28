@@ -200,9 +200,7 @@ public class MapActivity extends ActionBarActivity implements OnSharedPreference
 
 		mMockLocationServiceController = new MockLocationServiceController(this);
         mLocationManager= (LocationManager)getSystemService(Context.LOCATION_SERVICE);
-
         mDataSource = new DataSource(this);
-
         mAdHelper = new AdHelper(this,
         		(AdView)findViewById(R.id.adView),
         		getString(R.string.admod_testdevice_id_m8),
@@ -256,24 +254,17 @@ public class MapActivity extends ActionBarActivity implements OnSharedPreference
 		super.onNewIntent(intent);
 	}
 
-	@Override
-	protected void onPostResume () {
-		Log.d(TAG, "onPostResume");
-		mDataSource.registerOnSharedPreferenceChangeListener(this);
-		mMockLocationServiceController.onPostResume();
-		super.onPostResume();
-	}
-	
+    @Override
+    public void onResume() {
+        super.onResume();
+        mAdHelper.onResume();
+
+    }
+
 	@Override
 	public void onPause() {
 		mAdHelper.onPause();
 		super.onPause();
-	}
-
-	@Override
-	public void onResume() {
-		super.onResume();
-		mAdHelper.onResume();
 	}
 
 	@Override
@@ -284,16 +275,73 @@ public class MapActivity extends ActionBarActivity implements OnSharedPreference
 
     @Override
     protected void onStart() {
+        Log.d(TAG, "onStart");
         super.onStart();
         if(!mResolvingError)
         {  // more about this later
             mGoogleApiClient.connect();
         }
+        mDataSource.registerOnSharedPreferenceChangeListener(this);
+        mMockLocationServiceController.onStart();
+
+        boolean isEnabled = PreferencesUtils.getBoolean(this,
+                R.string.mock_btn_enabled_key, false);
+
+        if (isEnabled) {
+            // Resume Bottom state
+            mToggleButton.setChecked(isEnabled);
+
+            // Resume Marker state
+            mMarker.onStart();
+
+            // Resume Map state
+            moveToLocationZoom(mMarker.getMarkerLocation(), 500, 10);
+
+            // Resume Service state
+            mMockLocationServiceController.startBroadcast(mMarker.getMarkerLocation());
+
+        } else {
+            // Resume Map state
+            float last_cam_lat = PreferencesUtils.getFloat(this,
+                    R.string.map_lastknow_cam_lat_key, 0);
+            float last_cam_lon = PreferencesUtils.getFloat(this,
+                    R.string.map_lastknow_cam_lon_key, 0);
+
+            if (last_cam_lat != 0 && last_cam_lon != 0) {
+                LatLng last_cam_position = new LatLng(last_cam_lat, last_cam_lon);
+                Log.d(TAG, "Restore Camera location " + last_cam_position);
+                moveToLocationZoom(last_cam_position, 500, 10);
+
+            } else {
+                moveToLastKnownLocation();
+            }
+        }
+
+        //Restore MapType
+        int mapType = PreferencesUtils.getInt(mContext,
+                R.string.map_type_key, PreferencesUtils.MAP_TYPE_DEFAUlT);
+        mMap.setMapType(mapType);
+
+
     }
 
     @Override
 	protected void onStop() {
 		Log.d(TAG, "onStop");
+
+
+        if (checkMap()) {
+            CameraPosition cameraPosition = mMap.getCameraPosition();
+            Log.d(TAG, "Save camera position " + cameraPosition.target);
+            PreferencesUtils.setFloat(this,
+                    R.string.map_lastknow_cam_lat_key,
+                    (float) cameraPosition.target.latitude);
+            PreferencesUtils.setFloat(this,
+                    R.string.map_lastknow_cam_lon_key,
+                    (float) cameraPosition.target.longitude);
+
+        }
+
 		mDataSource.unregisterOnSharedPreferenceChangeListener(this);
         mMarker.onStop();
 		mMockLocationServiceController.onStop();
@@ -321,7 +369,6 @@ public class MapActivity extends ActionBarActivity implements OnSharedPreference
 				mMap.setMapType(maptype);
 			}
 		}
-
 	}
 
 	private void configSearchView(Menu menu) {
@@ -393,7 +440,9 @@ public class MapActivity extends ActionBarActivity implements OnSharedPreference
 	private void initBottom() {
 
 		mToggleButton = (ToggleButton) findViewById(R.id.button_MockLocation);
-		
+
+        addOnCheckChangedListener(mMarker);
+
 		addOnCheckChangedListener(new OnCheckChangedListener() {
 			
 			@Override
@@ -427,7 +476,7 @@ public class MapActivity extends ActionBarActivity implements OnSharedPreference
 			}
 		});
 		
-		addOnCheckChangedListener(mMarker);
+
 		
 		mToggleButton.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
 			
@@ -440,13 +489,7 @@ public class MapActivity extends ActionBarActivity implements OnSharedPreference
 				
 			}
 		});
-		
 
-		boolean buttomStatus = PreferencesUtils.getBoolean(this,
-				R.string.mock_btn_enabled_key, false);
-		if (buttomStatus) {
-			mToggleButton.setChecked(buttomStatus);
-		}
 	}
 	
 	/*   
@@ -459,38 +502,31 @@ public class MapActivity extends ActionBarActivity implements OnSharedPreference
 			Log.d(TAG, "checkMap ok ");
 			// Create marker
 			mMarker = new MyMarker(this);
-			
+
 			addOnMapClickListener(new OnMapClickListener() {
-				
-				@Override
-				public boolean onMapClick(LatLng latLng) {
-					
-					// Collapse search view if user click map
-					Log.d(TAG, "onMapClick");
-					if (mSearchView != null && (!mSearchView.isIconified())) {
-						mSearchView.setIconified(true);
-					}
-					return true;
-				}
-			});
+
+                @Override
+                public boolean onMapClick(LatLng latLng) {
+
+                    // Collapse search view if user click map
+                    Log.d(TAG, "onMapClick");
+                    if (mSearchView != null && (!mSearchView.isIconified())) {
+                        mSearchView.setIconified(true);
+                    }
+                    return true;
+                }
+            });
 			
 			// loop through mMapClickListener to let each listener handle this event 
 			mMap.setOnMapClickListener(new GoogleMap.OnMapClickListener() {
-			    @Override
-			    public  void onMapClick(LatLng latLng) {
-			        for (int i = 0; i < mMapClickListener.size(); i++) {			        	
-			            if (!mMapClickListener.get(i).onMapClick(latLng))
-			                break;
-			        }
-			    }
-			});
-			
-
-			//Restore MapType 
-			int mapType = PreferencesUtils.getInt(mContext,
-					R.string.map_type_key, PreferencesUtils.MAP_TYPE_DEFAUlT);
-			mMap.setMapType(mapType);
-				
+                @Override
+                public void onMapClick(LatLng latLng) {
+                    for (int i = 0; i < mMapClickListener.size(); i++) {
+                        if (!mMapClickListener.get(i).onMapClick(latLng))
+                            break;
+                    }
+                }
+            });
 
 		}
 	}
@@ -759,7 +795,6 @@ public class MapActivity extends ActionBarActivity implements OnSharedPreference
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    // TODO Auto-generated method stub
                     mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(new LatLng(
                             loc.getLatitude(), loc.getLongitude()), zoomLevel), durationMs, null);
                 }
@@ -777,25 +812,7 @@ public class MapActivity extends ActionBarActivity implements OnSharedPreference
 		}
 		
 	}
-	
-	/*   
-	 *  Listeners
-	 * 
 
-	private class DrawerItemClickListener implements ListView.OnItemClickListener {
-        @Override
-        public void onItemClick(AdapterView<?> parent, View view, final int position, long id) {
-        	
-        	mDrawerLayout.post(new Runnable() {
-	            @Override
-	            public void run() {
-	            	if (checkMap())
-	            	mMap.setMapType(mMapStyle.get(mMapStyleTitles[position]));
-	            }
-	        });
-        }
-    }
-	*/
 	
 	/**
 	 * Class to represent marker on the map 
@@ -814,14 +831,8 @@ public class MapActivity extends ActionBarActivity implements OnSharedPreference
 			this.mMapActivity = context;
 			this.mMap = mMapActivity.mMap;
 			mMarker = new MarkerOptions();
-			misEnabled = PreferencesUtils.getBoolean(mMapActivity,
-					R.string.mock_btn_enabled_key, false);
-			Log.d(TAG, "misEnabled " + misEnabled);
-
 			mMarker.draggable(false);
-			
-			// Restore camera or marker position in on create 
-			onCreate();
+
 		}
 		
 		
@@ -853,9 +864,13 @@ public class MapActivity extends ActionBarActivity implements OnSharedPreference
 		 */
 		public Location getMarkerLocation() {
 
-			if (mMarker == null)
-				return null;
+			if (mMarker == null) {
+                Log.d(TAG, " mMarker == null return null location");
+                return null;
+            }
+
 			LatLng latLng = mMarker.getPosition();
+
 			if (latLng != null) {
 				Location location = new Location("");
 				location.setLatitude(latLng.latitude);
@@ -866,10 +881,11 @@ public class MapActivity extends ActionBarActivity implements OnSharedPreference
 				// ElapsedRealtimeNanos , use helper method to do this
 				ApiAdapterFactory.getApiAdapter()
 						.makeLocationComplete(location);
-				Log.d(TAG, "Marker location" + location);
+				Log.d(TAG, " Marker location" + location);
 				return location;
 			}
 
+            Log.d(TAG, " Marker location null ");
 			return null;
 		}
 		
@@ -877,68 +893,31 @@ public class MapActivity extends ActionBarActivity implements OnSharedPreference
 
 			Log.d(TAG, "onStop");
 			if (isEnabled()) {
-
-				Location location = getMarkerLocation();
-				if (location != null) {
-					Log.d(TAG, "save location" + location);
-					PreferencesUtils.setFloat(mMapActivity,
-							R.string.map_lastknow_marker_lat_key,
-							(float) location.getLatitude());
-					PreferencesUtils.setFloat(mMapActivity,
-							R.string.map_lastknow_marker_lon_key,
-							(float) location.getLongitude());
-				}
-
-			} else {
-
-				if (checkMap()) {
-					CameraPosition cameraPosition = mMap.getCameraPosition();
-					
-					Log.d(TAG, "Save camera position " + cameraPosition.target);
-					PreferencesUtils.setFloat(mMapActivity,
-							R.string.map_lastknow_cam_lat_key,
-							(float) cameraPosition.target.latitude);
-					PreferencesUtils.setFloat(mMapActivity,
-							R.string.map_lastknow_cam_lon_key,
-							(float) cameraPosition.target.longitude);
-
-				}
-
-			}
+                Location location = getMarkerLocation();
+                if (location != null) {
+                    Log.d(TAG, "save location" + location);
+                    PreferencesUtils.setFloat(mMapActivity,
+                            R.string.map_lastknow_marker_lat_key,
+                            (float) location.getLatitude());
+                    PreferencesUtils.setFloat(mMapActivity,
+                            R.string.map_lastknow_marker_lon_key,
+                            (float) location.getLongitude());
+                }
+            }
 		}
 
-		public void onCreate() {
-			Log.d(TAG, "onCreate");
-			if (isEnabled()) {
-				
-				double lat = (double) PreferencesUtils.getFloat(mMapActivity,
+		public void onStart() {
+
+			Log.d(TAG, "onStart");
+
+            double lat = (double) PreferencesUtils.getFloat(mMapActivity,
 						R.string.map_lastknow_marker_lat_key, 0);
-				double lon = (double) PreferencesUtils.getFloat(mMapActivity,
+            double lon = (double) PreferencesUtils.getFloat(mMapActivity,
 						R.string.map_lastknow_marker_lon_key, 0);
-				LatLng latLng = new LatLng(lat, lon);
-				Log.d(TAG, "Resume location" + latLng);
-				moveMarkerToLocation(latLng);
-				mMapActivity.moveToLocation(latLng, 500);
+            LatLng latLng = new LatLng(lat, lon);
+            Log.d(TAG, "Resume location" + latLng);
+            moveMarkerToLocation(latLng);
 
-			} else {
-
-				float last_cam_lat = PreferencesUtils.getFloat(mMapActivity,
-						R.string.map_lastknow_cam_lat_key, 0);
-				float last_cam_lon = PreferencesUtils.getFloat(mMapActivity,
-						R.string.map_lastknow_cam_lon_key, 0);
-
-				if (last_cam_lat != 0 && last_cam_lon != 0) {
-					LatLng last_cam_position = new  LatLng(last_cam_lat, last_cam_lon);
-					Log.d(TAG, "Restore Camera location " + last_cam_position);
-					moveToLocation(last_cam_position, 500);
-
-				} else {
-
-					moveToLastKnownLocation();
-
-				}
-
-			}
 
 		}
 
@@ -968,7 +947,6 @@ public class MapActivity extends ActionBarActivity implements OnSharedPreference
 		private Messenger mMessenger;
 		private HandlerThread mthread;
 		private MockLocationServiceHandler mMockLocationServiceHandler;
-		private Location mserviceLocation;
 
 		private class MockLocationServiceHandler extends Handler {
 
@@ -983,7 +961,6 @@ public class MapActivity extends ActionBarActivity implements OnSharedPreference
 					Log.d(TAG,  " MockLocationServiceHandler MSG_RET_STATUS");
 					Log.d(TAG,  " MockLocationServiceHandler thread" + Thread.currentThread().getName());
 					mRemoteMockLocationServiceStatus =  msg.arg1;
-					mserviceLocation = (Location)msg.obj;
 					break;
 				}
 			}
@@ -1003,7 +980,7 @@ public class MapActivity extends ActionBarActivity implements OnSharedPreference
 			
 		}
 		
-		public void onPostResume() {
+		public void onStart(){
 
 			mthread = HandlerThreadHelper.createHandlerThread("MockLocationServiceProxy");
 			try {
@@ -1012,8 +989,8 @@ public class MapActivity extends ActionBarActivity implements OnSharedPreference
 				mMessenger = new Messenger(mMockLocationServiceHandler);
 			} catch (IllegalThreadStateException e) {
 				e.printStackTrace();
-			}
-			Log.d(TAG, "mthread state  " + mthread.getState());
+            }
+            Log.d(TAG, "mthread state  " + mthread.getState());
 
 			if (mIsBound == false) {
 				bindService();
@@ -1029,7 +1006,7 @@ public class MapActivity extends ActionBarActivity implements OnSharedPreference
 		}
 	
 		public void startMockService() {
-			startService(mIntent);
+            startService(mIntent);
 		}
 
 		public void setLocation(Location location) {
@@ -1040,16 +1017,15 @@ public class MapActivity extends ActionBarActivity implements OnSharedPreference
 		public void startBroadcast(Location location) {
 
 			setLocation(location);
-			sendMessageToService(MockLocationService.MSG_START_BROADCAST,null);
+            sendMessageToService(MockLocationService.MSG_START_BROADCAST,null);
 		}
 
 		public void stopBroadcast() {
-			
-			sendMessageToService(MockLocationService.MSG_STOP_BROADCAST,null);
+
+            sendMessageToService(MockLocationService.MSG_STOP_BROADCAST,null);
 		}
 
 		private void sendMessageToService(int message, Object obj) {
-			Log.d(TAG, "sendMessageToService" + message);
 			
 			final Message msg = Message.obtain(null, message, 0, 0);
 			msg.replyTo = mMessenger;
@@ -1059,13 +1035,11 @@ public class MapActivity extends ActionBarActivity implements OnSharedPreference
 			}
 			
 			try {
-				
 				if(mMockLocationService != null){
 					Log.d(TAG, " sendMessageToService " + message);
 					mMockLocationService.send(msg);
 				}
 			} catch (RemoteException e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
 		}
@@ -1087,50 +1061,23 @@ public class MapActivity extends ActionBarActivity implements OnSharedPreference
 
 		@Override
 		public void onServiceConnected(ComponentName name, IBinder service) {
-			// TODO Auto-generated method stub
 			Log.d(TAG, "onServiceConnected ");
-
 			mMockLocationService = new Messenger(service);
 			mIsBound = true;
-			sendMessageToService(MockLocationService.MSG_GET_STATUS , null);
-			//Toast.makeText(mContext, "MockLocationService connected",
-			//		Toast.LENGTH_SHORT).show();
+
 		}
 
 		@Override
 		public void onServiceDisconnected(ComponentName name) {
-			// TODO Auto-generated method stub
 			Log.d(TAG, "onServiceDisconnected ");
-
 			mMockLocationService = null;
 			mIsBound = false;
-			
-			//Toast.makeText(mContext, "MockLocationService disconnected",
-			//		Toast.LENGTH_SHORT).show();
-		}
 
-		public Location getServiceLocation() {
-			return mserviceLocation;
 		}
-		
-		public boolean isBinded() {
-			return mIsBound;
-		}
-
 
 	}
 
-	
-	/**
-	 * Get service current location
-	 * @return
-	 */
-	public Location getServiceLocation(){
-		if(mMockLocationServiceController != null && mMockLocationServiceController.isBinded()) {
-			return mMockLocationServiceController.getServiceLocation();
-		} else 
-			return null;
-	}
+
 	
 	public void addOnCheckChangedListener(OnCheckChangedListener listener) {
 	    this.mCheckChangedListener.add(listener);

@@ -23,7 +23,7 @@
     
     <string name="notification_mocklocation_title"
     		translation_description="the title of mock location notification ">
-    		XXX Location
+    		Current Location
     </string>
     
 	<string name="generic_no"
