@@ -14,7 +14,6 @@ import android.graphics.BitmapFactory;
 import android.location.Location;
 import android.location.LocationManager;
 import android.location.LocationProvider;
-import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.HandlerThread;
@@ -22,7 +21,6 @@ import android.os.IBinder;
 import android.os.Looper;
 import android.os.Message;
 import android.os.Messenger;
-import android.os.PowerManager;
 import android.os.Process;
 import android.os.RemoteException;
 import android.support.v4.app.NotificationCompat;
@@ -38,6 +36,7 @@ import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.common.api.Status;
 
 import org.ShinRH.android.mocklocation.utl.ApiAdapterFactory;
+import org.ShinRH.android.mocklocation.utl.HandlerThreadHelper;
 import org.ShinRH.android.mocklocation.utl.PreferencesUtils;
 
 import java.lang.ref.WeakReference;
@@ -46,7 +45,7 @@ import java.util.EnumMap;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-import static android.os.AsyncTask.*;
+
 public class MockLocationService extends Service implements
 		ConnectionCallbacks, OnConnectionFailedListener {
 	
@@ -106,30 +105,21 @@ public class MockLocationService extends Service implements
 	private List<String> mMockProviders ; 
 	private Messenger mMessenger ;
 	private GoogleApiClient mGoogleApiClient;
-	private PowerManager mPowerManager;
-	
-	
+
 	private interface MockLocationServiceState {
-		
 		 void onCreate();
 		 void onDestroy();
 		 void onScreenOn();
 		 void onScreenoff();
 		 void handleStartBroadcast();
 		 void handleStopBroadcast();
-		 void updateNotificationLocation();
+		 void updateNotification();
 	}
 	
 	
 	private class IdleState implements MockLocationServiceState {
 		
 		private final String TAG = IdleState.class.getName();
-		MockLocationService mockLocationService;
-		
-		
-		IdleState(MockLocationService mockLocationService) {
-			this.mockLocationService = mockLocationService;
-		}
 
 
 		@Override
@@ -156,8 +146,8 @@ public class MockLocationService extends Service implements
 
 		@Override
 		public void handleStartBroadcast() {			
-			mockLocationService.handleStartBroadcast();
-			mockLocationService.setState(MockLocationServiceStatus.BROADCASTING);
+			startBroadcast();
+			setState(MockLocationServiceStatus.BROADCASTING);
 		}
 
 
@@ -168,8 +158,8 @@ public class MockLocationService extends Service implements
 
 
 		@Override
-		public void updateNotificationLocation() {
-			Log.d(TAG,"updateNotificationLocation do nothing");
+		public void updateNotification() {
+			Log.d(TAG,"updateNotification do nothing");
 		}
 
 
@@ -178,24 +168,17 @@ public class MockLocationService extends Service implements
 	private class BroadCastingState implements MockLocationServiceState {
 		
 		private final String TAG = BroadCastingState.class.getName();
-		MockLocationService mockLocationService;
-		
-		
-		BroadCastingState(MockLocationService mockLocationService) {
-			this.mockLocationService = mockLocationService;
-		}
+
 		
 		@Override
 		public void onCreate() {
 			Log.d(TAG,"onCreate StartBroadcast ");
-			mockLocationService.handleStartBroadcast();
+			startBroadcast();
 		}
-				
+
 		@Override
 		public void onDestroy() {
 			Log.d(TAG,"onDestroy ");
-			mockLocationService.mBackgroundHandler.removeMessages(MSG_BROADCAST_LOCATION);
-			mockLocationService.setState(MockLocationServiceStatus.IDEL);	
 		}
 
 		@Override
@@ -206,8 +189,8 @@ public class MockLocationService extends Service implements
 		@Override
 		public void onScreenoff() {
 			Log.d(TAG,"onScreenoff ");
-			mockLocationService.mBackgroundHandler.removeMessages(MSG_BROADCAST_LOCATION);
-			mockLocationService.setState(MockLocationServiceStatus.PAUSE_SCREEN_OFF);		
+			mBackgroundHandler.removeMessages(MSG_BROADCAST_LOCATION);
+			setState(MockLocationServiceStatus.PAUSE_SCREEN_OFF);
 		}
 
 		@Override
@@ -218,39 +201,33 @@ public class MockLocationService extends Service implements
 		@Override
 		public void handleStopBroadcast() {
 			Log.d(TAG,"handleStopBroadcast ");	
-			mockLocationService.handleStopBroadcast();
-			mockLocationService.setState(MockLocationServiceStatus.IDEL);
+			stopBroadcast();
+			setState(MockLocationServiceStatus.IDEL);
 			
 		}
 
 		@Override
-		public void updateNotificationLocation() {
-			
-			Log.d(TAG,"updateNotificationLocation ");
-			mockLocationService.updateNotificationLocation();
+		public void updateNotification() {
+			Log.d(TAG,"updateNotification ");
+			updateNotificationLocation();
 		}
-		
-	}
+
+    }
 	
 	private class PauseState implements MockLocationServiceState {
 		
 		private final String TAG = PauseState.class.getName();
-		
-		MockLocationService mockLocationService;
 
-		PauseState(MockLocationService mockLocationService) {
-			this.mockLocationService = mockLocationService;
-		}
 
 		@Override
 		public void onCreate() {
-			Log.d(TAG,"onCreate ");
-			// Start broadcast first to resume the icon and mock providers 
-			mockLocationService.handleStartBroadcast();
-			if (mScreenState == ScreenState.ON){
-				mockLocationService.setState(MockLocationServiceStatus.BROADCASTING);
+			Log.d(TAG, "onCreate ");
+			if (mScreenState == ScreenState.ON) {
+                // Start broadcast first to resume the icon and mock providers
+                startBroadcast();
+				setState(MockLocationServiceStatus.BROADCASTING);
 			} else {
-				mockLocationService.setState(MockLocationServiceStatus.PAUSE_SCREEN_OFF);
+				setState(MockLocationServiceStatus.PAUSE_SCREEN_OFF);
 			}
 		}
 		
@@ -263,10 +240,10 @@ public class MockLocationService extends Service implements
 		@Override
 		public void onScreenOn() {
 			Log.d(TAG,"onScreenOn ");
-			Message m = Message.obtain(mockLocationService.mBackgroundHandler,
+			Message m = Message.obtain(mBackgroundHandler,
 					MockLocationService.MSG_BROADCAST_LOCATION);
-			mockLocationService.mBackgroundHandler.sendMessage(m);
-			mockLocationService.setState(MockLocationServiceStatus.BROADCASTING);
+			mBackgroundHandler.sendMessage(m);
+			setState(MockLocationServiceStatus.BROADCASTING);
 			
 		}
 
@@ -276,31 +253,27 @@ public class MockLocationService extends Service implements
 			
 		}
 
-
 		@Override
 		public void handleStartBroadcast() {
 			Log.d(TAG,"handleStartBroadcast do nothing ");
 		}
-
 
 		@Override
 		public void handleStopBroadcast() {
 			Log.d(TAG, "handleStopBroadcast");
 		}
 
-
 		@Override
-		public void updateNotificationLocation() {
-			Log.d(TAG, "updateNotificationLocation do nothing");
-			
+		public void updateNotification() {
+			Log.d(TAG, "updateNotification do nothing");
+
 		}
-		
+
 	}
-	
-	
+
 	@Override
 	public int onStartCommand(Intent intent, int flags, int startId) {
-		
+
 		Log.d(TAG, "onStartCommand" );
 		// check mock location button status , if it is enabled , which mean we are kill by system and restart again , and we need to keep broadcasting location
 		if(intent == null) {
@@ -323,7 +296,7 @@ public class MockLocationService extends Service implements
 	public void onDestroy() {
 		Log.d(TAG, "onDestroy");
 
-		
+
 		mState.onDestroy();
 		PreferencesUtils.setInt(this, 
 				R.string.mocklocationservice_state_key, getStat());
@@ -337,8 +310,7 @@ public class MockLocationService extends Service implements
 		if (mGoogleApiClient != null && mGoogleApiClient.isConnected()) {
 			mGoogleApiClient.disconnect();
 		}
-		
-		
+
 	}
 
 	@Override
@@ -347,7 +319,6 @@ public class MockLocationService extends Service implements
 		Log.d(TAG, "onCreate");
 		mNM = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
 		mLocationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
-		mPowerManager = (PowerManager) getSystemService(POWER_SERVICE);	
 		
 		mMockProviders = new ArrayList<String>();
 		mMockProviders.add(LocationManager.GPS_PROVIDER);
@@ -355,10 +326,12 @@ public class MockLocationService extends Service implements
 		mMockProviders.add(FUSE_PROVIDER);
 		
 		mStateEnumMap = new EnumMap<MockLocationServiceStatus,MockLocationServiceState>(MockLocationServiceStatus.class);
-		mStateEnumMap.put(MockLocationServiceStatus.IDEL, new IdleState(this));
-		mStateEnumMap.put(MockLocationServiceStatus.BROADCASTING, new BroadCastingState(this));
-		mStateEnumMap.put(MockLocationServiceStatus.PAUSE_SCREEN_OFF, new PauseState(this));
-		
+		mStateEnumMap.put(MockLocationServiceStatus.IDEL, new IdleState());
+		mStateEnumMap.put(MockLocationServiceStatus.BROADCASTING, new BroadCastingState());
+		mStateEnumMap.put(MockLocationServiceStatus.PAUSE_SCREEN_OFF, new PauseState());
+
+        mScreenState = ApiAdapterFactory.getApiAdapter().isScreenOn(this) ? ScreenState.ON : ScreenState.OFF;
+
 		// Create state
 		int state = PreferencesUtils.getInt(this, 
 				R.string.mocklocationservice_state_key, MockLocationServiceStatus.IDEL.ordinal());
@@ -368,8 +341,6 @@ public class MockLocationService extends Service implements
 			mState.onCreate();
 		}
 
-        mScreenState = ScreenState.ON;
-		
 		// Create a location client for Google Play services
 		GoogleApiClient mGoogleApiClient = new GoogleApiClient.Builder(this)
 				.addApi(LocationServices.API)
@@ -378,10 +349,9 @@ public class MockLocationService extends Service implements
 				.build();
 		mGoogleApiClient.connect();
 		
-		mBackgroundThread = new HandlerThread("location broadcast thread",Process.THREAD_PRIORITY_BACKGROUND);
-		mBackgroundThread.start();
+		mBackgroundThread = HandlerThreadHelper.createHandlerThread("location broadcast thread",
+                Process.THREAD_PRIORITY_BACKGROUND);
 		mBackgroundHandler = new BackgroundHandler(mBackgroundThread.getLooper());
-		
 		mUIThreadHandler = new UIThreadHandler(this);
 		mMessenger = new Messenger(mUIThreadHandler);
 		
@@ -431,9 +401,9 @@ public class MockLocationService extends Service implements
 	public void onConnectionFailed(ConnectionResult connectionResult) {
 		mGoogleApiClient = null;
 	}
-	
 
-	
+
+
 	// Main thread handler 
 	private static class UIThreadHandler extends Handler {
 
@@ -451,18 +421,18 @@ public class MockLocationService extends Service implements
 			
 			case MSG_START_BROADCAST:
 				Log.d(TAG, "UIThreadHandler MSG_START_BROADCAST ");
-				if (theService != null) {	
+				if (theService != null) {
 					Message m = Message.obtain(theService.mBackgroundHandler, MSG_START_BROADCAST);
 					theService.mBackgroundHandler.sendMessage(m);
 				}
-				
+
 				break;
 			case MSG_STOP_BROADCAST:
 				Log.d(TAG, "UIThreadHandler MSG_STOP_BROADCAST ");
 				if (theService != null) {
 					Message m = Message.obtain(theService.mBackgroundHandler, MSG_STOP_BROADCAST);
-					theService.mBackgroundHandler.sendMessage(m);			
-				}				
+					theService.mBackgroundHandler.sendMessage(m);
+				}
 				break;
 				
 			case MSG_SET_LOCATION:
@@ -470,14 +440,14 @@ public class MockLocationService extends Service implements
 				// Update Location
 				Location location = (Location) msg.obj;
 				if (location != null && theService != null) {
-					
+
 					theService.setLocation(location);
 					synchronized (theService.mMockLocationServiceStatus) {
-						theService.mState.updateNotificationLocation();
-					}
+						theService.mState.updateNotification();
+                    }
 
 				}
-				
+
 				break;
 
 			case MSG_GET_STATUS:
@@ -490,7 +460,6 @@ public class MockLocationService extends Service implements
 						m.obj = theService.getLocation();
 						callbackMessenger.send(m);
 					} catch (RemoteException e) {
-						// TODO Auto-generated catch block
 						e.printStackTrace();
 					}
 				}
@@ -569,7 +538,7 @@ public class MockLocationService extends Service implements
 
 	};
 	
-	private void handleStartBroadcast() {
+	private void startBroadcast() {
 		
 		// Replace system GPS , Network , Fuse provider for LocationManager
 		addMockProviders(mMockProviders);
@@ -595,7 +564,7 @@ public class MockLocationService extends Service implements
 		
 	}
 
-	private void handleStopBroadcast() {
+	private void stopBroadcast() {
 
 		
 		mBackgroundHandler.removeMessages(MSG_BROADCAST_LOCATION);
@@ -758,25 +727,15 @@ public class MockLocationService extends Service implements
         return notification;
 	}
 
-	/*
-	 * Update the  notification title and content
-	 * @param title notification title
-	 * @param content  notification content
-	 */
-	
-	private void updateNotification(String title, String content ) {
-		Log.d(TAG, "UpdateNotification ++ ");
-		mNM.notify(NOTIFICATIONID, getNotification(title,content));
-		Log.d(TAG, "UpdateNotification -- ");
-	}
 	
 	/*
 	 * Update the location of notification
 	 */
 	private void updateNotificationLocation() {
 		Location location = getLocation();
-		updateNotification(getString(R.string.notification_mocklocation_title),
-				getString(R.string.notification_mocklocation_secondline , location.getLatitude(), location.getLongitude()));
+        mNM.notify(NOTIFICATIONID, getNotification(getString(R.string.notification_mocklocation_title),
+                getString(R.string.notification_mocklocation_secondline , location.getLatitude(), location.getLongitude())));
+
 	}
 
 

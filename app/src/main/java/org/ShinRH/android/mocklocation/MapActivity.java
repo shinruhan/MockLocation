@@ -275,8 +275,11 @@ public class MapActivity extends ActionBarActivity implements OnSharedPreference
 
     @Override
     protected void onStart() {
+
         Log.d(TAG, "onStart");
+
         super.onStart();
+
         if(!mResolvingError)
         {  // more about this later
             mGoogleApiClient.connect();
@@ -287,6 +290,9 @@ public class MapActivity extends ActionBarActivity implements OnSharedPreference
         boolean isEnabled = PreferencesUtils.getBoolean(this,
                 R.string.mock_btn_enabled_key, false);
 
+        float last_cam_zoom = PreferencesUtils.getFloat(this,
+                R.string.map_lastknow_cam_zoom_key, 10);
+
         if (isEnabled) {
             // Resume Bottom state
             mToggleButton.setChecked(isEnabled);
@@ -295,7 +301,7 @@ public class MapActivity extends ActionBarActivity implements OnSharedPreference
             mMarker.onStart();
 
             // Resume Map state
-            moveToLocationZoom(mMarker.getMarkerLocation(), 500, 10);
+            moveToLocationZoom(mMarker.getMarkerLocation(), 500, last_cam_zoom);
 
             // Resume Service state
             mMockLocationServiceController.startBroadcast(mMarker.getMarkerLocation());
@@ -308,9 +314,10 @@ public class MapActivity extends ActionBarActivity implements OnSharedPreference
                     R.string.map_lastknow_cam_lon_key, 0);
 
             if (last_cam_lat != 0 && last_cam_lon != 0) {
+
                 LatLng last_cam_position = new LatLng(last_cam_lat, last_cam_lon);
                 Log.d(TAG, "Restore Camera location " + last_cam_position);
-                moveToLocationZoom(last_cam_position, 500, 10);
+                moveToLocationZoom(last_cam_position, 500, last_cam_zoom);
 
             } else {
                 moveToLastKnownLocation();
@@ -339,6 +346,10 @@ public class MapActivity extends ActionBarActivity implements OnSharedPreference
             PreferencesUtils.setFloat(this,
                     R.string.map_lastknow_cam_lon_key,
                     (float) cameraPosition.target.longitude);
+            Log.d(TAG, "Save Camera Zoom Level " + cameraPosition.zoom);
+            PreferencesUtils.setFloat(this,
+                    R.string.map_lastknow_cam_zoom_key,
+                    cameraPosition.zoom);
 
         }
 
@@ -502,6 +513,8 @@ public class MapActivity extends ActionBarActivity implements OnSharedPreference
 			Log.d(TAG, "checkMap ok ");
 			// Create marker
 			mMarker = new MyMarker(this);
+            // Enable Zoom Control
+            mMap.getUiSettings().setZoomControlsEnabled(true);
 
 			addOnMapClickListener(new OnMapClickListener() {
 
@@ -773,7 +786,7 @@ public class MapActivity extends ActionBarActivity implements OnSharedPreference
      * @param durationMs
      * @param zoomLevel zoomLevel
      */
-    private void moveToLocationZoom (final LatLng latLng , final int durationMs , final int zoomLevel) {
+    private void moveToLocationZoom (final LatLng latLng , final int durationMs , final float zoomLevel) {
         if(checkMap()) {
             runOnUiThread(new Runnable() {
                 @Override
@@ -790,7 +803,7 @@ public class MapActivity extends ActionBarActivity implements OnSharedPreference
      * @param durationMs durationMs The duration of the animation in milliseconds.
      * @param zoomLevel zoomLevel
      */
-    private void moveToLocationZoom (final Location loc , final int durationMs , final int zoomLevel) {
+    private void moveToLocationZoom (final Location loc , final int durationMs , final float zoomLevel) {
         if(checkMap()) {
             runOnUiThread(new Runnable() {
                 @Override
