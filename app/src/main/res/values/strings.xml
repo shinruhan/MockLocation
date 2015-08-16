@@ -126,6 +126,20 @@
 			translation_description="In the settings. in the location settings block . location report interval dialogTitle      		Character limit: ~20 (1 line)">
      		Location report interval
   	</string>
-  	
-  	
+
+  	<string name="pref_htc_mode_title"
+		translation_description="In the settings. in the htc mode settings block . htc mode title      		Character limit: ~20 (1 line)">
+     		hTC mode
+  	</string>
+
+	<string name="pref_htc_mode_checkbox_title"
+			translation_description="In the settings. in the htc mode settings block . htc mode checkbox title      		Character limit: ~20 (1 line)">
+     		Enable hTC mode
+  	</string>
+
+	<string name="pref_htc_mode_checkbox_summary"
+			translation_description="In the settings. in the htc mode settings block . htc mode checkbox summery      		Character limit: ~20 (1 line)">
+     		Use hTC hidden API
+  	</string>
+
 </resources>

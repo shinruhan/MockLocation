@@ -9,6 +9,8 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.SharedPreferences;
+import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.location.Location;
@@ -32,9 +34,10 @@ import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.common.api.GoogleApiClient.ConnectionCallbacks;
 import com.google.android.gms.common.api.GoogleApiClient.OnConnectionFailedListener;
 import com.google.android.gms.common.api.PendingResult;
-import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.common.api.Status;
+import com.google.android.gms.location.LocationServices;
 
+import org.ShinRH.android.mocklocation.content.DataSource;
 import org.ShinRH.android.mocklocation.utl.ApiAdapterFactory;
 import org.ShinRH.android.mocklocation.utl.HandlerThreadHelper;
 import org.ShinRH.android.mocklocation.utl.PreferencesUtils;
@@ -44,7 +47,6 @@ import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
-
 
 public class MockLocationService extends Service implements
 		ConnectionCallbacks, OnConnectionFailedListener {
@@ -82,6 +84,13 @@ public class MockLocationService extends Service implements
 	// HandlerThread run in background
 	private HandlerThread mBackgroundThread;
 
+	private DataSource mDataSouece;
+	private SharedPreferencesListener mSharedPreferencesListener;
+	private boolean mIsHTCMode = false ;
+
+    private static final String CARGPS_MOCK_PROVIDER = "htcMock";
+    private static final String ADD_CARGPS_MOCK_PROVIDER = "addCarGpsProvider";
+    private static final String REMOVE_CARGPS_MOCK_PROVIDER = "removeCarGpsProvider";
 
 	public enum  MockLocationServiceStatus {
 		BROADCASTING,
@@ -255,7 +264,7 @@ public class MockLocationService extends Service implements
 
 		@Override
 		public void handleStartBroadcast() {
-			Log.d(TAG,"handleStartBroadcast do nothing ");
+			Log.d(TAG, "handleStartBroadcast do nothing ");
 		}
 
 		@Override
@@ -311,7 +320,10 @@ public class MockLocationService extends Service implements
 			mGoogleApiClient.disconnect();
 		}
 
-	}
+        mDataSouece.unregisterOnSharedPreferenceChangeListener(mSharedPreferencesListener);
+
+
+    }
 
 	@Override
 	public void onCreate() {
@@ -361,8 +373,11 @@ public class MockLocationService extends Service implements
 		intentFilter.addAction(Intent.ACTION_SCREEN_OFF);
 		registerReceiver(mBroadcastReciever, intentFilter, null, mUIThreadHandler);
 		
-		
-	
+		//Listen for htc mode state change
+		mDataSouece = new DataSource(this);
+		mSharedPreferencesListener = new SharedPreferencesListener();
+		mDataSouece.registerOnSharedPreferenceChangeListener(mSharedPreferencesListener);
+
 	}
 
 	@Override
@@ -539,9 +554,13 @@ public class MockLocationService extends Service implements
 	};
 	
 	private void startBroadcast() {
-		
+
 		// Replace system GPS , Network , Fuse provider for LocationManager
-		addMockProviders(mMockProviders);
+        if (mIsHTCMode) {
+            addMockProviderHTCMode();
+        } else {
+		    addMockProviders(mMockProviders);
+        }
 		
 		// Replace location provider for Google Location Service
 		if(mGoogleApiClient != null && mGoogleApiClient.isConnected()){
@@ -558,9 +577,9 @@ public class MockLocationService extends Service implements
 		Location location = getLocation();
 		// show notification
 		startForeground(NOTIFICATIONID, getNotification(getString(R.string.notification_mocklocation_title),
-				getString(R.string.notification_mocklocation_secondline , 
-						location.getLatitude(), 
-						location.getLongitude())));
+                getString(R.string.notification_mocklocation_secondline,
+                        location.getLatitude(),
+                        location.getLongitude())));
 		
 	}
 
@@ -585,8 +604,11 @@ public class MockLocationService extends Service implements
 		}
 
 		// Remove system GPS , Network , Fuse provider for LocationManager
-		removeMockProviders(mMockProviders);
-
+        if(mIsHTCMode) {
+            removeMockProviderHTCMode();
+        } else {
+            removeMockProviders(mMockProviders);
+        }
 		// cancel notification
 		stopForeground(true);
 		
@@ -597,27 +619,45 @@ public class MockLocationService extends Service implements
 		Log.d(TAG, "handleBroadcastLocation");
 		Location location = getLocation();
 
-		for (String providerName : mMockProviders) {
-			location.setProvider(providerName);
-			Log.d(TAG, "broadcast location" + location);
+        if(mIsHTCMode) {
 
-			try {
-				mLocationManager
-						.setTestProviderLocation(providerName, location);
+            location.setProvider(LocationManager.GPS_PROVIDER);
+            Log.d(TAG, "broadcast location" + location);
+            try {
+                mLocationManager
+                        .setTestProviderLocation(LocationManager.GPS_PROVIDER, location);
 
-				if (mGoogleApiClient != null && mGoogleApiClient.isConnected()) {
-                    PendingResult<Status> ret = LocationServices.FusedLocationApi.setMockLocation(mGoogleApiClient,location);
-                    final Status status = ret.await(1, TimeUnit.SECONDS);
-                    if (!status.isSuccess()) {
-                        Log.d(TAG," FusedLocationApi setMockLocation fail");
-                    }
-				}
-			} catch (SecurityException e) {
-				e.printStackTrace();
-			} catch (IllegalArgumentException e) {
-				e.printStackTrace();
-			}
-		}
+            } catch (SecurityException e) {
+                e.printStackTrace();
+            } catch (IllegalArgumentException e) {
+                e.printStackTrace();
+            }
+
+        } else {
+
+            for (String providerName : mMockProviders) {
+                location.setProvider(providerName);
+                Log.d(TAG, "broadcast location" + location);
+                try {
+                    mLocationManager
+                            .setTestProviderLocation(providerName, location);
+
+                } catch (SecurityException e) {
+                    e.printStackTrace();
+                } catch (IllegalArgumentException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+
+        if (mGoogleApiClient != null && mGoogleApiClient.isConnected()) {
+            PendingResult<Status> ret = LocationServices.FusedLocationApi.setMockLocation(mGoogleApiClient,location);
+            final Status status = ret.await(1, TimeUnit.SECONDS);
+            if (!status.isSuccess()) {
+                Log.d(TAG," FusedLocationApi setMockLocation fail");
+            }
+        }
+
 		// if state is still need to broadcast , send a delay message to
 		// ourself
 		synchronized (mMockLocationServiceStatus) {
@@ -631,6 +671,14 @@ public class MockLocationService extends Service implements
 
 	}
 
+    private void addMockProviderHTCMode() {
+        mLocationManager.sendExtraCommand(CARGPS_MOCK_PROVIDER,ADD_CARGPS_MOCK_PROVIDER,null);
+    }
+
+    private void removeMockProviderHTCMode(){
+        mLocationManager.sendExtraCommand(CARGPS_MOCK_PROVIDER,REMOVE_CARGPS_MOCK_PROVIDER,null);
+    }
+
 	private void addMockProviders(List<String> providers) {
 
 		if (providers == null || providers.isEmpty()) {
@@ -641,12 +689,12 @@ public class MockLocationService extends Service implements
 
 			try {
 				mLocationManager.addTestProvider(providerName, false, false, false, false,
-						true, true, true, android.location.Criteria.POWER_LOW,
-						android.location.Criteria.ACCURACY_COARSE);
+                        true, true, true, android.location.Criteria.POWER_LOW,
+                        android.location.Criteria.ACCURACY_COARSE);
 				mLocationManager.setTestProviderEnabled(providerName, true);
 				mLocationManager.setTestProviderStatus(providerName,
-						LocationProvider.AVAILABLE, null,
-						System.currentTimeMillis());
+                        LocationProvider.AVAILABLE, null,
+                        System.currentTimeMillis());
 			} catch (Exception e) {
 				Log.d(TAG,
 						"Failed setting up Mock Location Provider "
@@ -748,7 +796,25 @@ public class MockLocationService extends Service implements
 		mState = mStateEnumMap.get(state);
 	}
 
+
+	private class SharedPreferencesListener implements OnSharedPreferenceChangeListener {
+
+		@Override
+		public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
+			Log.d(TAG , "Pref " + key + "Change");
+			if(key.equals(getApplicationContext().getString(R.string.pref_htc_mode_checkbox_key))){
+                mIsHTCMode = sharedPreferences.getBoolean(key,false);
+				Log.d(TAG,"htc mode " + mIsHTCMode );
+			}
+		}
+
+	};
+
+
+
+
 }
+
 
 
 

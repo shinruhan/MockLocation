@@ -19,6 +19,17 @@
 	        android:key="@string/pref_location_report_interval_key"
 	        android:title="@string/pref_location_report_interval_title"
 	        android:dialogTitle="@string/pref_location_report_interval_dialogTitle" />
+
+	</PreferenceCategory>
+
+	<PreferenceCategory
+        android:title="@string/pref_htc_mode_title"
+        android:key="@string/pref_htc_mode_key">
+        <CheckBoxPreference
+            android:title="@string/pref_htc_mode_checkbox_title"
+            android:defaultValue="false"
+            android:summary="@string/pref_htc_mode_checkbox_summary"
+            android:key="@string/pref_htc_mode_checkbox_key" />
 	</PreferenceCategory>
 
 </PreferenceScreen>

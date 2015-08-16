@@ -12,4 +12,6 @@
     <string name="pref_storage_clear_history_key">pref_storage_clear_history</string>
     <string name="pref_location_key">pref_location</string>
     <string name="pref_location_report_interval_key">pref_location_reporting</string>
+    <string name="pref_htc_mode_key">pre_htc_mode</string>
+    <string name="pref_htc_mode_checkbox_key">ref_htc_mode_checkbox</string>
 </resources>

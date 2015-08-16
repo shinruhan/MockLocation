@@ -462,7 +462,7 @@ public class MapActivity extends ActionBarActivity implements OnSharedPreference
 				Log.d(TAG, "onCheckedChanged isChecked " + isChecked);
 
 				if (isChecked) {
-					if (!checkMockLocationSettings()) {
+					if ( !isHTCMode() && !checkMockLocationSettings()) {
 						mToggleButton.setChecked(false);
 						return false;
 					} else {
@@ -826,9 +826,13 @@ public class MapActivity extends ActionBarActivity implements OnSharedPreference
 		
 	}
 
-	
+	private boolean isHTCMode(){
+        SharedPreferences sharePreference = getSharedPreferences(org.ShinRH.android.mocklocation.utl.Constants.SETTINGS_NAME,Context.MODE_MULTI_PROCESS);
+        return sharePreference.getBoolean(getString(R.string.pref_htc_mode_checkbox_key),false);
+    }
+
 	/**
-	 * Class to represent marker on the map 
+	 * Class to represent marker on the map
 	 * @author shinru_han
 	 *
 	 */

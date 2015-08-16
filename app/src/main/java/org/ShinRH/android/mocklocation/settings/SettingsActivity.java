@@ -39,25 +39,27 @@ public class SettingsActivity extends AbstractSettingsActivity {
 	    EditTextPreference locationReportIntervalPreference = (EditTextPreference) findPreference(getString(R.string.pref_location_report_interval_key));
 	    // Set current report interval to summary
 	    locationReportIntervalPreference.setSummary(getString(R.string.pref_location_report_interval_summary
-	    		,Integer.valueOf(PreferencesUtils.getString(mContext, R.string.pref_location_report_interval_key, "1"))));
+				, Integer.valueOf(PreferencesUtils.getString(mContext, R.string.pref_location_report_interval_key, "1"))));
   
 	    locationReportIntervalPreference.setOnPreferenceChangeListener(new OnPreferenceChangeListener() {
-	    		
+
 			@Override
 			public boolean onPreferenceChange(Preference preference, Object newValue) {
 				// TODO Auto-generated method stub
-				Log.d(TAG,"onPreferenceChange " + newValue);
-				if(newValue instanceof String) {
-					Integer reportInterval = Integer.valueOf((String)newValue);
-					Log.d(TAG,"reportInterval " + reportInterval);
+				Log.d(TAG, "onPreferenceChange " + newValue);
+				if (newValue instanceof String) {
+					Integer reportInterval = Integer.valueOf((String) newValue);
+					Log.d(TAG, "reportInterval " + reportInterval);
 					Intent intent = new Intent(mContext, MockLocationService.class);
-					intent.putExtra(getString(R.string.pref_location_report_interval_key), reportInterval*1000);
+					intent.putExtra(getString(R.string.pref_location_report_interval_key), reportInterval * 1000);
 					startService(intent);
-					preference.setSummary(getString(R.string.pref_location_report_interval_summary, reportInterval ));
+					preference.setSummary(getString(R.string.pref_location_report_interval_summary, reportInterval));
 				}
 				return true;
 			}
 		});
+
+
 
 	}
 	

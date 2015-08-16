@@ -1,8 +1,6 @@
 package org.ShinRH.android.mocklocation.content;
 
 
-import org.ShinRH.android.mocklocation.utl.Constants;
-
 import android.content.ContentResolver;
 import android.content.Context;
 import android.content.SharedPreferences;
@@ -10,6 +8,7 @@ import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
 import android.database.ContentObserver;
 import android.net.Uri;
 
+import org.ShinRH.android.mocklocation.utl.Constants;
 /**
  * Data source on the phone.
  * 
